@@ -1,0 +1,18 @@
+CONGRESSIONAL TRADE COPY BACKTEST  |  2020-01-02 → 2026-05-27
+==============================================================================================
+Strategy                Final Value       Total Return    CAGR        Max Drawdown    Sharpe  
+----------------------------------------------------------------------------------------------
+Pelosi                  $3,196,671        219.4%          20.0%       -42.7%          0.68    
+Green                   $2,024,399        102.3%          11.7%       -26.7%          0.47    
+McCaul                  $4,914,174        391.0%          28.3%       -43.9%          0.91    
+VOO Lump Sum            $2,517,120        151.7%          15.6%       -27.4%          0.69    
+VOO DCA                 $2,209,643        120.8%          13.2%       -18.7%          0.71    
+Dip-Tranche (ref)       $2,461,030        146.1%          15.2%       -22.5%          ~0.70 (ref)
+----------------------------------------------------------------------------------------------
+* Risk-free rate: 4% annual | Uninvested cash accrues at MM rate
+* Disclosure lag: 30 calendar days, execute on next Monday/trading day
+* Dip-Tranche is a reference line (CAGR/Max-DD from prior analysis)
+
+DATA NOTES:
+  Tickers downloaded: ['AAPL', 'ABBV', 'AMZN', 'CVX', 'GOOGL', 'JNJ', 'LLY', 'META', 'MRNA', 'MSFT', 'NVDA', 'PFE', 'SLB', 'TSLA', 'VOO', 'XOM']
+  Failed/skipped: None
