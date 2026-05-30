@@ -19,6 +19,12 @@ Deps: `yfinance matplotlib pandas numpy requests`. pandas freq string is `'M'` (
 sqlite cache occasionally throws "database is locked" / all-NaN tickers — `robust_download()` retries;
 if a ticker still comes back empty, just re-run.
 
+## Act on it today
+
+| Script | What it does |
+|--------|--------------|
+| **`v3_allocate_today.py`** | Reads live prices and prints **today's** v3 Balanced allocation in actual dollars + shares for a given `--capital` (default $1M), the deployment schedule (Foundation/DCA/Dip-reserve), the current market regime, and the live S&P drawdown → which dip tier fires now. `--json` for automation. Notification-first; places no trades. Run: `python3 backtests/v3_allocate_today.py --capital 1000000` |
+
 ## The two that matter (current strategy — v3)
 
 | Script | What it shows | Result file |

@@ -73,7 +73,9 @@ list of substitutions and what each over/understates is in the caveats block of
 
 Each column is a **target allocation** for the fully-deployed portfolio. **Balanced is the default.**
 Every ETF choice — the principle behind the sleeve and the verified fund facts — is sourced in
-[`v3-etf-rationale.md`](v3-etf-rationale.md).
+[`v3-etf-rationale.md`](v3-etf-rationale.md). To turn this into **today's dollar buy list** from live
+prices (allocation + regime + active dip tier), run
+[`backtests/v3_allocate_today.py`](../backtests/v3_allocate_today.py) `--capital 1000000`.
 
 | Sleeve | ETF examples | Defensive | **Balanced** | Growth-tilt |
 |--------|--------------|:-----:|:-----:|:-----:|
