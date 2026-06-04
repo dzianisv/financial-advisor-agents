@@ -3,3 +3,6 @@ __pycache__/
 .telegraph_token
 .telegraph_path
 .tasks/
+
+# cached intraday OHLCV (re-fetch via crypto_data.py)
+backtests/daytrade/data/

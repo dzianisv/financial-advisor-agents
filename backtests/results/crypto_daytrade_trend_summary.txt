@@ -1,0 +1,37 @@
+Loading Coinbase 1h bars (cached)...
+  BTC/USD     47509 bars  2021-01-01 -> 2026-06-04
+  ETH/USD     47509 bars  2021-01-01 -> 2026-06-04
+  SOL/USD     43483 bars  2021-06-17 -> 2026-06-04
+  HYPE/USD     2834 bars  2026-02-05 -> 2026-06-04
+
+=== IN-SAMPLE selection (<= 2023-12-31, taker 0.5%/side, 9 trials) ===
+  SMA( 12, 72)  Sharpe -3.04  CAGR  -59.7%  DD -94.7%  rt/day 1.3
+  SMA( 12,120)  Sharpe -1.83  CAGR  -43.2%  DD -88.2%  rt/day 1.0
+  SMA( 12,200)  Sharpe -1.44  CAGR  -36.8%  DD -86.9%  rt/day 0.8
+  SMA( 24, 72)  Sharpe -3.21  CAGR  -60.5%  DD -94.7%  rt/day 1.2
+  SMA( 24,120)  Sharpe -1.69  CAGR  -39.7%  DD -86.3%  rt/day 1.0
+  SMA( 24,200)  Sharpe -1.33  CAGR  -33.6%  DD -85.5%  rt/day 0.8
+  SMA( 48, 72)  Sharpe -3.41  CAGR  -60.5%  DD -94.4%  rt/day 1.2
+  SMA( 48,120)  Sharpe -2.24  CAGR  -47.4%  DD -89.4%  rt/day 0.9
+  SMA( 48,200)  Sharpe -1.33  CAGR  -32.6%  DD -83.3%  rt/day 0.7
+  -> best IS params: SMA(24, 200)
+
+=== OUT-OF-SAMPLE (2024-01-01 ->), params fixed from IS ===
+  OOS taker 0.5%/side            Sharpe -2.66  CAGR  -54.0%  DD -87.9%  exp 0.40  rt/day 0.8
+  OOS maker 0.1%/side            Sharpe -0.26  CAGR   -7.3%  DD -46.7%  exp 0.40  rt/day 0.8
+  STRESS OOS 2x taker 1.0%       Sharpe -5.52  CAGR  -80.9%  DD -98.4%  exp 0.40  rt/day 0.8
+
+  Benchmark (hold, OOS):
+    hold BTC/USD  Sharpe  0.49  CAGR   17.6%  DD -50.2%
+    hold ETH/USD  Sharpe  0.12  CAGR   -9.9%  DD -65.3%
+    hold SOL/USD  Sharpe  0.20  CAGR  -14.7%  DD -75.7%
+
+=== GATE VERDICT ===
+  FAIL (no edge found)
+   - OOS Sharpe <= 0 at retail taker cost
+   - OOS risk-adj < hold-BTC (-2.66 < 0.49)
+   - edge dies under 2x cost stress
+
+  HYPE/USD: 2834 bars since 2026-02-05 — too short for OOS gate; tracked, not traded.
+
+  chart -> /private/tmp/bt-c/report/img/crypto_daytrade_trend.png
