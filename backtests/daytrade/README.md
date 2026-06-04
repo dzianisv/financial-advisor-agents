@@ -9,7 +9,31 @@ Every script here runs a strategy through the **`strategy-discovery-backtest` ga
   Coinbase granularities are 1m/5m/15m/1h/6h/1d (no 4h). Run: `python3 backtests/daytrade/crypto_data.py 1h`.
 - `crypto_trend_backtest.py` — first gated crypto day-trade candidate (intraday SMA trend, long-only,
   vol-targeted, no-trade band). Run from repo root: `python3 backtests/daytrade/crypto_trend_backtest.py`.
+- `stock_intraday_backtest.py` — Track B equity intraday gate (ORB / momentum / VWAP-reversion on
+  SPY/QQQ/AAPL/NVDA/AMD/TSLA, yfinance 1h). Run: `python3 backtests/daytrade/stock_intraday_backtest.py`.
 - `data/` — cached OHLCV (git-ignored; re-fetch via the loader).
+
+## Track B — stock intraday (`stock_intraday_backtest.py`) — FAIL (no edge)
+
+Three long-only intraday candidates on liquid US names, yfinance 1h (~730d), IS/OOS 60/40, ~3 bps/side
+cost + 2× stress, vs hold-SPY.
+
+| Candidate | IS Sharpe | OOS Sharpe | OOS DD | 2× cost | vs hold-SPY (1.59) | Verdict |
+|-----------|-----------|-----------|--------|---------|--------------------|---------|
+| ORB (opening-range breakout) | −0.61 | 1.28 | −7% | 0.67 | loses | FAIL |
+| MOM (intraday momentum) | −1.01 | −0.93 | −28% | −2.18 | loses | FAIL |
+| REV (VWAP mean-reversion) | −0.44 | 1.30 | −5% | 0.78 | loses | FAIL |
+
+**Honest read:** ORB and REV show *positive* OOS Sharpe — but their **IS Sharpe is negative**, so the
+OOS "win" is **regime luck** (the OOS window 2025-04→2026-06 was a strong bull where holding SPY returned
+34%/Sharpe 1.59), not a persistent edge. None beats buy-and-hold risk-adjusted. The gate correctly FAILs
+all three. Caveats stated: yfinance gives only ~730d hourly (one regime, short sample); and a multi-name
+intraday strategy needs ≥$25k to clear the **PDT** rule regardless of backtest.
+
+**Consistent with the whole day-trade investigation:** across crypto (intraday + daily) and equities
+(intraday), **buy-and-hold / mid-risk allocation beats systematic day-trading after costs.** For income,
+Track A's mid-risk book (`strategy/midrisk-bubble-trimmed.md`) is the evidence-backed answer; the
+day-trade desks trade nothing until a candidate PASSes the gate.
 
 ## Result so far (honest)
 

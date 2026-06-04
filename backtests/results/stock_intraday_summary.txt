@@ -1,0 +1,21 @@
+Downloading 1h bars (yfinance, ~730d limit)...
+  2023-07-07 -> 2026-06-03, 5082 bars, ['AAPL', 'AMD', 'NVDA', 'QQQ', 'SPY', 'TSLA']
+  IS 2023-07-07->2025-04-03 | OOS 2025-04-03->2026-06-03
+
+candidate                        IS Sharpe  OOS Shrp  OOS CAGR   OOS DD  2x Shrp
+ORB (opening-range breakout)        -0.61     1.28    20.6%   -7.0%    0.67
+MOM (intraday momentum)             -1.01    -0.93   -11.6%  -27.8%   -2.18
+REV (VWAP mean-reversion)           -0.44     1.30    20.8%   -4.7%    0.78
+
+  Benchmark hold-SPY (OOS): Sharpe 1.59  CAGR 34.1%  DD -9.6%
+
+=== GATE VERDICTS (Track B) ===
+  ORB (opening-range breakout)     FAIL (no edge)  < hold-SPY (1.28 < 1.59)
+  MOM (intraday momentum)          FAIL (no edge)  OOS Sharpe <= 0 after cost
+  REV (VWAP mean-reversion)        FAIL (no edge)  < hold-SPY (1.30 < 1.59)
+
+  PDT CAVEAT: a multi-name intraday strategy needs >=$25k equity (else 3 day-trades/5d cap).
+  DATA CAVEAT: yfinance gives only ~730d of hourly bars — short sample, one market regime.
+  No edge found — intraday equity signals don't clear costs OOS. Honest result; for income, hold/mid-risk (Track A) beats day-trading here too.
+
+  chart -> /private/tmp/bt-b/report/img/stock_intraday.png
