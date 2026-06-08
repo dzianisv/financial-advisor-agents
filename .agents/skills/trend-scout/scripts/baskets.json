@@ -1,0 +1,72 @@
+{
+  "_meta": {
+    "benchmark": "SPY",
+    "assembled": "2026-06-08",
+    "note": "Themes as equal-weight baskets. core = constituents scored for heat/breadth/stage. second_derivative = supply-chain / laggard names surfaced as cheap exposure, especially when a theme is LATE. Tickers validated US-listed/ADR, yfinance-resolvable, as of assembly date. Re-validate periodically; some are recent IPOs with short history."
+  },
+  "themes": [
+    {
+      "theme": "ai-compute",
+      "etf_proxy": "SMH",
+      "leader": "NVDA",
+      "core": ["NVDA","AMD","TSM","AVGO","ASML","MU","KLAC","LRCX","AMAT","MRVL"],
+      "second_derivative": ["CDNS","SNPS","COHR","ARM"]
+    },
+    {
+      "theme": "ai-memory-storage",
+      "etf_proxy": "DRAM",
+      "leader": "MU",
+      "core": ["MU","SNDK","WDC","STX","MRVL","AMAT","LRCX","KLAC"],
+      "second_derivative": ["ENTG","ACLS","UCTT","CAMT"]
+    },
+    {
+      "theme": "optical-networking",
+      "etf_proxy": "NONE",
+      "leader": "COHR",
+      "core": ["COHR","LITE","ANET","CIEN","MRVL","AVGO","CRDO","ALAB","AAOI"],
+      "second_derivative": ["POET","AMKR","MTSI"]
+    },
+    {
+      "theme": "datacenter-power",
+      "etf_proxy": "GRID",
+      "leader": "VRT",
+      "core": ["VRT","ETN","CEG","VST","GEV","POWL","NRG","FIX","MOD"],
+      "second_derivative": ["NVT","BWXT","HUBB","AROC"]
+    },
+    {
+      "theme": "nuclear-smr",
+      "etf_proxy": "NLR",
+      "leader": "CCJ",
+      "core": ["CCJ","OKLO","SMR","LEU","NNE","UEC","BWXT","VST","CEG","DNN"],
+      "second_derivative": ["UUUU","NXE","GEV","ASPI"]
+    },
+    {
+      "theme": "space-satellite",
+      "etf_proxy": "UFO",
+      "leader": "RKLB",
+      "core": ["RKLB","ASTS","LUNR","PL","RDW","FLY","SATS","IRDM","GSAT","VSAT"],
+      "second_derivative": ["KTOS","LHX","CACI"]
+    },
+    {
+      "theme": "robotics-automation",
+      "etf_proxy": "BOTZ",
+      "leader": "ISRG",
+      "core": ["ISRG","ABBNY","ROK","TER","KEYS","NVDA","PATH","SYM"],
+      "second_derivative": ["ZBRA","CGNX","NDSN","SERV"]
+    },
+    {
+      "theme": "quantum-computing",
+      "etf_proxy": "QTUM",
+      "leader": "IONQ",
+      "core": ["IONQ","RGTI","QBTS","QUBT","IBM","GOOGL","HON"],
+      "second_derivative": ["ARQQ","LAES","LSCC"]
+    },
+    {
+      "theme": "defense-tech",
+      "etf_proxy": "ITA",
+      "leader": "PLTR",
+      "core": ["PLTR","LMT","RTX","NOC","GD","LDOS","KTOS","AVAV","LHX"],
+      "second_derivative": ["MRCY","BWXT","RCAT"]
+    }
+  ]
+}

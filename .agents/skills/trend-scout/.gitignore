@@ -1,0 +1,4 @@
+scripts/__pycache__/
+scripts/theme_radar_latest.json
+scripts/valuation_cache_*.json
+reports/*_state.json
