@@ -482,6 +482,71 @@ The skill is considered WORKING when: total_pass >= 6 AND total_fail == 0 for 2 
 Until then, keep iterating (fix gaps → re-run → re-score).
 </eval_tracking>
 
+<auto_research>
+## Auto-Research: autonomous self-improvement loop (karpathy/autoresearch applied to this skill)
+
+Inspired by Andrej Karpathy's AutoResearch (https://github.com/karpathy/autoresearch) —
+*"One GPU, one file, one metric."* An agent edits ONE file (`train.py`), runs an experiment under
+a fixed budget, scores ONE metric (`val_bpb`), and **keeps the change only if the metric improved**,
+iterating ~100 experiments overnight. We run the SAME loop to improve THIS skill instead of training
+a model:
+
+| AutoResearch (Karpathy) | This skill |
+|---|---|
+| one editable file: `train.py` | one editable file: **`SKILL.md`** |
+| one metric: `val_bpb` (lower better) | one metric: **RUBRIC mean across eval cases** (higher better) |
+| one experiment: train 5 min | one experiment: **run the actor on `evals/cases/` + LLM-judge with `evals/RUBRIC.md`** |
+| keep change iff `val_bpb` dropped | **keep the SKILL.md edit iff mean rose, else revert** |
+| budget: wallclock → ~100 runs/night | budget: **`--budget` rounds** |
+
+The greedy keep/discard + checkpoint/revert + audit trail is owned by the harness
+`scripts/auto_research.py` (pure-python, **zero API cost**). The agent does only the two expensive
+steps each round — RUN and JUDGE — then hands scores to the harness, which decides keep-or-revert.
+
+### Trigger
+"auto-research this skill", "self-improve the skill", "run the autoresearch loop", "optimize the
+rubric overnight", "improve until it ships".
+
+### One round (the orchestrator executes this)
+```
+0. ONCE:  python3 scripts/auto_research.py init --budget 10      # snapshot SKILL.md as baseline
+LOOP (until SHIP or budget exhausted):
+1. python3 scripts/auto_research.py next-target                  # which RUBRIC dim is weakest?
+2. EDIT SKILL.md to fix ONLY that one dimension (smallest change that could move it). One file. One lever.
+3. python3 scripts/auto_research.py snapshot N                   # freeze the edited SKILL.md as round-N
+4. RUN the actor (the 5-step method above) on each case in evals/cases/train/  (holdout case kept aside)
+5. JUDGE each output against evals/RUBRIC.md (0–5 per applicable dimension). LLM-as-judge; be honest.
+6. python3 scripts/auto_research.py record N \
+       --dims source_grounding=4 non_obvious_discovery=5 skeptic_discipline=5 \
+              actionability=4 quorum_routing=5 prescreen_usage=5
+   # harness appends to evals/scores.md, then KEEP (new best, promote) or DISCARD (auto-revert SKILL.md)
+7. python3 scripts/auto_research.py status                       # stop-condition + rounds left
+```
+
+### Keep/discard rule (the whole point)
+`record` compares the round mean to the running best:
+- **mean rose → KEEP**: round-N becomes the new `best.md`; edits compound from here.
+- **mean fell/flat → DISCARD**: `SKILL.md` is auto-reverted to `best.md`. The bad edit never persists.
+
+This is exactly Karpathy's loop: a change survives ONLY if the metric says it helped. No edit is
+trusted on narrative — only on the rubric.
+
+### Stop condition (from RUBRIC.md, enforced by `status`)
+SHIP when train mean ≥ 4.2 **and** no dimension mean < 3.0. Else loop until budget exhausted, then
+ship the best variant found. Run the SHIPPED `best.md` once more on the **holdout** case to guard
+against overfitting the train cases.
+
+### Why one dimension per round
+Same reason Karpathy edits one file and watches one number: attribution. Change six things and a
+mean move is unattributable. Fix the single weakest dimension, re-score, and you know whether THAT
+lever worked. `next-target` always points you at the current weakest dimension.
+
+### Overnight / scheduled
+Like AutoResearch's "~100 experiments while you sleep", wrap the loop in a scheduler
+(`claude /loop`, openclaw cron) with `--budget` rounds. State is in `evals/auto_research_state.json`
+so the loop is resumable across restarts; variants are kept in `evals/variants/` for diffing.
+</auto_research>
+
 <stateful_mode>
 ## Stateful Operation (daily ingest + weekly synthesis)
 

@@ -18,3 +18,4 @@
 ## Summary of fixes applied
 1. v0→v1: prescreen MANDATORY + extractable citation requirement → fixed `prescreen_usage` (2→5)
 2. v1→v2: 3-question per-candidate template + quorum boundary → fixed `skeptic_discipline` (3→5)
+| 1 | v3-auto-research-baseline (KEEP) | 4.25 | 5.00 | 5.00 | 4.25 | 5.00 | 5.00 | 4.75 | — |
