@@ -109,8 +109,11 @@ same pipeline serially in-agent). Parallelism is the design: independent lenses 
 | `risk-management` | weekly P3 (+ daily gate) | VETO authority |
 | `portfolio-monitor` | weekly P3 | holdings triggers → PRIORITY ACTIONS |
 | `prediction-market-odds` | weekly P1 (via fomc) | crowd odds for Fed/macro |
-| `superforecasting` + `forecast-ledger` | **roster — not yet wired** | dated probability + grading; planned for per-candidate timing |
-| narrative-velocity / watchlist-monitor / recommendation-journal | **PLANNED — not built** | see PRD gaps 3,5,6 |
+| `forecast-ledger` | weekly committee cron (logs each DM'd buy, scores 30/60/90d) | the feedback loop — WIRED, but no scored cycles yet |
+| `superforecasting` | roster — not yet wired | dated probability/timing; future per-candidate use |
+| `mention_velocity.py` (in trend-stock-research) | daily 08:10 | narrative-velocity counter → feeds convergence pool (BUILT) |
+| `liveness-monitor` | daily 09:00 health cron | dead-man's-switch over the daily jobs (BUILT) |
+| watchlist-monitor / recommendation-journal | CUT (folded into portfolio-monitor / forecast-ledger) | not separate skills — see AGENTS.md anti-bloat |
 
 ## 2. Skills
 
