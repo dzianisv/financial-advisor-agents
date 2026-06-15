@@ -28,9 +28,15 @@ DATA ONLY. No buy/sell call, no thesis. Return numbers with `as-of` + `source`; 
 - Aggregate net daily flow (IBIT/FBTC/etc., creations − redemptions) + 5-day direction (inflow/outflow).
 - Try via WebFetch (not urllib — these block bots): `farside.co.uk/btc/`, `sosovalue.com` ETF dashboard, `coinglass.com/bitcoin-etf`. If ALL are blocked, emit the metric anyway with `value: "[UNAVAILABLE]"` + which sources you tried. **Do NOT drop the line** — its absence must be loud, not silent.
 
-## Sources (try in order; one fetch at a time to avoid 429)
-- Price/MA: `yfinance` (`BTC-USD`, `range=5y` for the 200-week) or Yahoo chart API.
-- On-chain: WebFetch/WebSearch over `newhedge.io/bitcoin/*`, `checkonchain.com`, `lookintobitcoin.com`, `bitcoinmagazinepro.com/charts/*`. These charts are often JS-gated — if a clean number isn't fetchable, mark that metric `[UNAVAILABLE]`, do not infer it.
+## Sources (preferred = deterministic; the JS-gated charts are flaky run-to-run)
+- **On-chain valuation core → run the script** (reliable JSON API, no key, no JS-gating):
+  ```bash
+  python3 .agents/skills/crypto-onchain-data/onchain_fetch.py   # MVRV-Z, NUPL, Puell, realized price + as-of
+  ```
+  This replaces the flaky `checkonchain`/`lookintobitcoin` WebFetch path that returned `[UNAVAILABLE]` (403/428)
+  intermittently. If the script reports a metric in its `unavailable` list, THEN best-effort WebFetch
+  `newhedge.io/bitcoin/*` as fallback; if still gated, mark that metric `[UNAVAILABLE]` — never infer it.
+- **Price + 200d/200-week MA:** `yfinance` (`BTC-USD`, `range=5y` for the 200-week) or Yahoo chart API.
 - If MVRV-Z and price disagree wildly, re-pull; report both, don't average.
 
 ## Output contract (one record per metric)
