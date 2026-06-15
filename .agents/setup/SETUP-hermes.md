@@ -36,7 +36,7 @@ CRON_TZ=UTC
 45 7 * * 1-5  ~/workspace/backtest/scripts/hermes-run.sh "/dip-screener: scan, regime-gate, alert only HIGH dips in RISK_ON"
 50 7 * * 1-5  ~/workspace/backtest/scripts/hermes-run.sh "/crypto-dip-scanner: alert only if coin >=-30% from ATH AND F&G<25"
 0  8 * * 1-5  ~/workspace/backtest/scripts/hermes-run.sh "/regime-detection + /fomc-monitor: alert only if changed"
-15 8 * * 1-5  ~/workspace/backtest/scripts/hermes-run.sh "/trend-stock-research broad: append to /tmp/narrative.jsonl, no alert"
+15 8 * * 1-5  ~/workspace/backtest/scripts/hermes-run.sh "/trend-stock-research broad: append to the durable narrative pool, no alert"
 30 8 * * 1-5  ~/workspace/backtest/scripts/hermes-run.sh "/signal-convergence-alert: alert if >=2 signals same ticker"
 30 9 * * 1    ~/workspace/backtest/scripts/hermes-run.sh "Run full weekly brief pipeline (collect, quorum top5, risk veto, synthesize) and DM it"
 ```

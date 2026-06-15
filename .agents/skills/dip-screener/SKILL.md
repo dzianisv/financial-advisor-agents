@@ -1,6 +1,6 @@
 ---
 name: dip-screener
-description: Screen S&P 100 for quality stocks trading >= 20%/25%/30% below their 52-week ATH. Fires an immediate alert when a HIGH-conviction dip (>= -30%) aligns with a RISK_ON regime. Use when asked "what quality stocks are on sale", "what fell from highs", "any big dips in the market", "catch the next Google dip", "fallen angels", or on the daily proactive schedule. Never re-proposes the same alert within the same calendar week.
+description: Screen S&P 100 for quality stocks trading >= 20%/25%/30% below their 52-week high. Fires an immediate alert when a HIGH-conviction dip (>= -30%) aligns with a RISK_ON regime. Use when asked "what quality stocks are on sale", "what fell from highs", "any big dips in the market", "catch the next Google dip", "fallen angels", or on the daily proactive schedule. Never re-proposes the same alert within the same calendar week.
 license: MIT
 compatibility: opencode
 metadata:
@@ -9,7 +9,7 @@ metadata:
   role: quality-stock-dip-detector
 ---
 
-# Dip Screener (S&P 100 quality stocks below 52-week ATH)
+# Dip Screener (S&P 100 quality stocks below 52-week high)
 
 Scans the S&P 100 daily for stocks meaningfully below their 52-week high. The goal: catch the next **Google -30% from ATH** or **Meta -40% from ATH** — quality names, temporary dislocation, opportunity.
 
@@ -61,13 +61,18 @@ If `regime = RISK_OFF`: no new buys. Still run screener to build watchlist for w
 **Step 2: For each HIGH hit in RISK_ON regime → immediate DM:**
 ```
 🚨 DIP ALERT — [TICKER] [pct]% below 52w high
-  ATH: $[ath]  Now: $[price]  200dMA: $[sma] ([pct_vs_200d]% [above/below])
+  52w high: $[high_52w]  Now: $[price]  200dMA: $[sma] ([pct_vs_200d]% [above/below])
   Regime: RISK_ON (score [score])
   → Route to /multi-lens-quorum for verdict? Reply YES to run full analysis.
 ```
 
-**Step 3: For MEDIUM hits → add to weekly candidate pool.**
-Write to `/tmp/dip_candidates.jsonl` (read by `signal-convergence-alert` at 08:30 UTC).
+**Step 3: For MEDIUM hits → add to weekly candidate pool — DETERMINISTICALLY.**
+Run with `--emit-pool` so the script itself appends HIGH+MEDIUM rows (no LLM in the loop):
+```bash
+python3 dip_screener.py --threshold 20 --emit-pool   # → ~/.openclaw/workspace/investor/pools/dip_candidates.jsonl
+```
+That durable path (NOT `/tmp` — openclaw cron sessions don't share `/tmp`) is read by
+`signal-convergence-alert` at 08:30 UTC.
 
 **Step 4: Cross-check with trend-stock-research.**
 If a HIGH/MEDIUM ticker also appears in recent FT/WSJ coverage → CONVERGENCE signal. Elevate conviction.

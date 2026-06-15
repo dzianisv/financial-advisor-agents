@@ -612,7 +612,7 @@ converging = search_theme_convergence(min_sources=3, min_weeks=2)
 
 4. Apply the skeptic filter (Step 4) to any `actionable` thesis
 5. Route survivors to multi-lens-quorum with the full evidence trail
-6. **Feed the convergence pool:** append each `building`/`actionable` ticker to `/tmp/narrative.jsonl`
+6. **Feed the convergence pool:** append each `building`/`actionable` ticker to `~/.openclaw/workspace/investor/pools/narrative.jsonl`
    as `{"ticker":..,"reason":"narrative <building|actionable>: N sources/M weeks","date":"<today>"}`
    so `signal-convergence-alert` can cross it with dip/13F/congress signals (the SanDisk pattern).
 
@@ -620,7 +620,7 @@ converging = search_theme_convergence(min_sources=3, min_weeks=2)
 
 SYNTHESIZE above is prose/theme-based. `mention_velocity.py` is the hard, testable companion: it counts
 RECENT-DATED Google News RSS headlines per watchlist ticker, compares to that ticker's OWN trailing
-baseline (persisted ledger), and FLAGS a spike — appending it to `/tmp/narrative.jsonl` automatically.
+baseline (persisted ledger), and FLAGS a spike — appending it to `~/.openclaw/workspace/investor/pools/narrative.jsonl` automatically.
 ```bash
 python3 .agents/skills/trend-stock-research/mention_velocity.py --tickers NVDA,WDC,STX,MU --days 7 --json
 ```

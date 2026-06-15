@@ -32,8 +32,17 @@ Ledger: `$LIVENESS_LEDGER` or `~/.openclaw/workspace/investor/liveness.jsonl` (p
 Schedule one cron (e.g. `0 9 * * 1-5` UTC, after the morning scans) running:
 ```bash
 python3 ~/.openclaw/workspace/investor/skills/liveness-monitor/liveness.py \
-  check --expect dip-screener,crypto-dip-scanner,signal-convergence,regime-fed,journalism --max-age-hours 26
+  check --expect dip-screener,crypto-dip-scanner,signal-convergence,narrative-velocity --max-age-hours 26
 ```
+**The `--expect` names MUST exactly match the `--job` strings each cron logs** (else a real job looks
+"never logged" → false alarm, or an outage is missed). Only list jobs that actually call `liveness.py log`.
+Currently: `dip-screener, crypto-dip-scanner, signal-convergence, narrative-velocity`. (Add `regime-fed`
+/ `journalism` only once those crons also log.)
+
+> **GAP — the health check can itself die silently.** It's one cron on one bot; if the bot is down, it
+> emits nothing and you learn nothing. For true coverage, add an EXTERNAL dead-man's-switch (e.g.
+> healthchecks.io or a cron on another host) that expects the bot's daily check-in and alarms if absent.
+
 - exit 0 / `"status":"ALL_FRESH"` → every expected job logged within 26h → **NO_REPLY** (stay silent).
 - exit 1 / `"status":"STALE"` → **DM the owner**: "⚠️ advisor jobs stale: <list>" so a silent outage is caught
   in a day, not weeks.

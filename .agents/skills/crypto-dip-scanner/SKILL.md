@@ -65,8 +65,8 @@ These two are the reliable, always-available signals. **Funding rate is a BONUS 
 
 Fire:
 ```
-🚨 CRYPTO DIP ALERT — [COIN] [pct]% below ATH
-  ATH: $[ath]  Now: $[price]  200dMA: $[sma]
+🚨 CRYPTO DIP ALERT — [COIN] [pct]% below 52w high
+  52w high: $[high_52w]  Now: $[price]  200dMA: $[sma]
   Fear & Greed: [n]/100 ([label])  ← EXTREME FEAR
   BTC Funding: [rate]% [or "unavailable — Binance geo-blocked"]
   Historical context: BTC/ETH extreme-fear zones (F&G<25) have historically been net-positive

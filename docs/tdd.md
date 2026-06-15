@@ -46,17 +46,17 @@ persists in the backend's own store (openclaw SQLite / hermes `jobs.json`) — n
  │ SP100[100]    │ │ alternative.me  │ │ ^VIX/^VIX3M +   │ │ paywall-aware   │ │                     │
  │               │ │ + binance(451)  │ │ FRED OAS        │ │                 │ │                     │
  │ GATE:         │ │ GATE:           │ │ GATE:           │ │ GATE: none      │ │ GATE:               │
- │ ≤-30% ATH     │ │ ≤-30% ATH       │ │ regime flip vs  │ │ (collect only)  │ │ ticker in ≥2        │
- │ AND RISK_ON   │ │ AND F&G<25      │ │ yesterday OR    │ │                 │ │ independent pools   │
+ │ ≤-30% (52w high)     │ │ ≤-30% (52w high)       │ │ regime flip vs  │ │ (collect only)  │ │ ticker in ≥2        │
+ │ AND RISK_ON   │ │ AND F&G<25      │ │ yesterday OR    │ │                 │ │ ≥2 pools (may correlate)   │
  │               │ │ (funding=bonus) │ │ new FOMC stmt   │ │                 │ │ (≥3 → quorum)       │
  └───┬───────┬───┘ └───┬─────────────┘ └───┬─────────────┘ └───┬─────────────┘ └───┬─────────────────┘
      │       │         │                   │                   │                   │
    DM◄┘    MED→        DM◄─ (extreme       DM◄─ (if changed)  append ticker      DM◄─ (≥2 src)
-   (HIGH)  /tmp/dip_   fear+dip)           else SILENT        /tmp/narrative      else SILENT
+   (HIGH)  pools/dip_   fear+dip)           else SILENT        pools/narrative      else SILENT
            candidates                                          .jsonl
            .jsonl │                                              │
                   └───────────────► POOLS ◄───────────────────────┘
-                          /tmp/dip_candidates.jsonl, /tmp/narrative.jsonl,
+                          ~/.openclaw/workspace/investor/pools/dip_candidates.jsonl, ~/.openclaw/workspace/investor/pools/narrative.jsonl,
                           13f ledger, congress ledger  ──► read by convergence (08:30) + weekly brief
 ```
 
@@ -116,9 +116,9 @@ same pipeline serially in-agent). Parallelism is the design: independent lenses 
 
 | skill | script | data source (exact) | failure mode | alert trigger |
 |---|---|---|---|---|
-| dip-screener | `dip_screener.py` | yfinance, `SP100[]` (100 tickers), 1y `Close` | batch try/except → skip batch; ticker drop → skip | HIGH (`≤−30%` from 52w ATH) AND regime=RISK_ON → DM. MEDIUM (`−25..−30%`) → `/tmp/dip_candidates.jsonl` |
+| dip-screener | `dip_screener.py` | yfinance, `SP100[]` (100 tickers), 1y `Close` | batch try/except → skip batch; ticker drop → skip | HIGH (`≤−30%` from 52w high) AND regime=RISK_ON → DM. MEDIUM (`−25..−30%`) → `~/.openclaw/workspace/investor/pools/dip_candidates.jsonl` |
 | crypto-dip-scanner | `crypto_dip_scanner.py` | yfinance BTC/ETH/SOL/BNB/AVAX/LINK `-USD`; F&G `api.alternative.me/fng/?limit=1`; funding `fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT` | F&G/funding fetch fail → `None` (omit line); funding 451 geo-block → omit | PRIMARY: any coin `≤−30%` from ATH AND F&G `<25` → DM. Funding = bonus only, never required |
-| signal-convergence-alert | `convergence.py` | reads `/tmp/dip_candidates.jsonl`, `/tmp/narrative.jsonl`, 13F ledger (`~/.openclaw/workspace/investor/13f/recommended.jsonl`, 14d), congress ledger (`…/congress/recommended.jsonl`, 14d) | missing pool → skipped silently; bad JSON line → skipped | `n_sources ≥ 2` same ticker → DM; `≥ 3` → route `/multi-lens-quorum` |
+| signal-convergence-alert | `convergence.py` | reads `~/.openclaw/workspace/investor/pools/dip_candidates.jsonl`, `~/.openclaw/workspace/investor/pools/narrative.jsonl`, 13F ledger (`~/.openclaw/workspace/investor/13f/recommended.jsonl`, 14d), congress ledger (`…/congress/recommended.jsonl`, 14d) | missing pool → skipped silently; bad JSON line → skipped | `n_sources ≥ 2` same ticker → DM; `≥ 3` → route `/multi-lens-quorum` |
 | regime-detection | `regime_monitor.py` | yfinance `SPY`,`^VIX`,`^VIX3M`; FRED CSV `BAMLH0A0HYM2` | FRED fail → `credit=0`; VIX NaN → `vix_ts=0` | weights: sma200×3, vix_ts×2, credit×2 → score → RISK_ON/NEUTRAL/RISK_OFF |
 
 Tiers — dip stock: HIGH `≤−30`, MED `≤−25`, WATCH `≤−20`. Crypto: HIGH `≤−40`, MED `≤−30`, WATCH `≤−20`.
@@ -163,7 +163,7 @@ hermes per its scheduler. Pick the slot times per backend so they land at the sa
 | 07:45 | M–F | dip-screener | HIGH dip AND RISK_ON |
 | 07:50 | M–F | crypto-dip-scanner | coin `≤−30%` AND F&G`<25` |
 | 08:00 | M–F | regime + fomc | regime flipped OR new FOMC |
-| 08:15 | M–F | trend-stock-research broad | never — append `/tmp/narrative.jsonl` |
+| 08:15 | M–F | trend-stock-research broad | never — append `~/.openclaw/workspace/investor/pools/narrative.jsonl` |
 | 08:30 | M–F | signal-convergence-alert | ticker in ≥2 sources |
 | 09:30 | Mon | weekly brief | always |
 
@@ -183,7 +183,7 @@ hermes per its scheduler. Pick the slot times per backend so they land at the sa
 
 `convergence.py --json`:
 ```json
-{"min_sources":2,"convergences":[{"ticker":"WDC","sources":["13f","dip","journalism"],"n_sources":3,"notes":["dip: -31% from ATH","journalism: 3 FT/WSJ mentions"]}],"pools_read":["/tmp/dip_candidates.jsonl"]}
+{"min_sources":2,"convergences":[{"ticker":"WDC","sources":["13f","dip","journalism"],"n_sources":3,"notes":["dip: -31% from 52w high","journalism: 3 FT/WSJ mentions"]}],"pools_read":["~/.openclaw/workspace/investor/pools/dip_candidates.jsonl"]}
 ```
 
 `regime_monitor.py --json`:

@@ -15,12 +15,18 @@ Honesty notes:
   - sma200 is null when <200 trading days of history exist (never a mislabeled shorter mean).
 """
 from __future__ import annotations
-import argparse, json, sys, time
+import argparse, json, os, sys, time
+from datetime import datetime, timezone
 
 try:
     import yfinance as yf
 except ImportError:
     sys.exit("pip install yfinance")
+
+# DURABLE pool path (NOT /tmp — openclaw isolated cron sessions don't share /tmp, so a pool written by
+# the 07:45 dip job must live on disk for the 08:30 convergence job to read it).
+DEFAULT_POOL = os.environ.get(
+    "DIP_POOL", os.path.expanduser("~/.openclaw/workspace/investor/pools/dip_candidates.jsonl"))
 
 SP100 = [
     "AAPL", "MSFT", "AMZN", "NVDA", "GOOGL", "META", "BRK-B", "LLY", "JPM", "V",
@@ -94,13 +100,36 @@ def scan(threshold_pct: float = 20.0) -> list[dict]:
     return results
 
 
+def emit_pool(hits: list[dict], path: str) -> int:
+    """Deterministically append HIGH+MEDIUM dips to the durable convergence pool (no LLM in the loop)."""
+    rows = [h for h in hits if h["conviction"] in ("HIGH", "MEDIUM")]
+    if not rows:
+        return 0
+    today = datetime.now(timezone.utc).date().isoformat()
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "a") as f:
+        for h in rows:
+            f.write(json.dumps({
+                "ticker": h["ticker"],
+                "reason": f"dip {h['pct_from_high']}% below 52w high ({h['conviction']})",
+                "date": today,
+            }) + "\n")
+    return len(rows)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--threshold", type=float, default=20.0)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--emit-pool", nargs="?", const=DEFAULT_POOL, default=None,
+                    help="append HIGH+MEDIUM dips to the durable convergence pool (default: %(default)s)")
     a = ap.parse_args()
 
     hits = scan(a.threshold)
+
+    if a.emit_pool:
+        n = emit_pool(hits, a.emit_pool)
+        print(f"[dip-screener] wrote {n} candidate(s) to pool {a.emit_pool}", file=sys.stderr)
 
     if a.json:
         print(json.dumps(hits, indent=2))

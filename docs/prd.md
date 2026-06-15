@@ -11,7 +11,7 @@ Owner runs $1M tradfi book + ~$177k crypto book. No time to research. Nothing wa
 
 | Miss | When | What happened | Why missed |
 |---|---|---|---|
-| Google (GOOGL) | Spring 2025 | quality stock -30% from 52w ATH | no dip alert existed |
+| Google (GOOGL) | Spring 2025 | quality stock -30% from 52w high | no dip alert existed |
 | SanDisk (WDC) | Sept 2025 | FT/WSJ AI-supply-chain narrative built over WEEKS | one-pass weekly scan missed buildup |
 | BTC | April 2025 | $61k, -43% from $108k ATH, F&G sub-20, funding neg | textbook accumulation, no alert |
 
@@ -33,12 +33,13 @@ Ranked by impact.
 
 | # | Feature | Catches | Trigger | Status |
 |---|---|---|---|---|
-| 1 | dip-screener | Google -30% | scan S&P100 daily, >=20/25/30% below 52w ATH; HIGH tier >=-30% | BUILT |
-| 2 | crypto-dip-scanner | BTC $61k | BTC/ETH/SOL/BNB/AVAX % below ATH + F&G + funding; primary = dip>=-30% AND F&G<25 | BUILT |
-| 3 | narrative-velocity-tracker | SanDisk buildup | rolling 4-week ticker-mention counter across FT/WSJ/SeekingAlpha; spike 0→3+ mentions/wk = alert | PLANNED |
-| 4 | signal-convergence-alert | SanDisk multi-signal | DM when 2+ independent signals same ticker (dip + journalism + 13F + congressional) | BUILT |
-| 5 | watchlist-monitor | — | standing price triggers; alert day price hits, not next Monday | PLANNED |
-| 6 | recommendation-journal | — | log every rec + 30/60/90d outcome; feedback loop; answer "why miss X" | PLANNED |
+| 1 | dip-screener | Google -30% | scan S&P100 daily, >=20/25/30% below 52w high; HIGH tier >=-30% | BUILT |
+| 2 | crypto-dip-scanner | BTC $61k | BTC/ETH/SOL/BNB/AVAX % below 52w high + F&G + funding; primary = dip>=-30% AND F&G<25 | BUILT |
+| 3 | narrative-velocity | SanDisk buildup | rolling mention-rate vs own baseline; spike feeds convergence | BUILT (`mention_velocity.py` in trend-stock-research) |
+| 4 | signal-convergence-alert | SanDisk multi-signal | DM when 2+ sources same ticker (may be correlated) | BUILT |
+| 5 | watchlist-monitor | — | standing price triggers on candidates | CUT → folded into `portfolio-monitor` |
+| 6 | recommendation-journal | — | log every rec + 30/60/90d outcome | CUT → `forecast-ledger` already does this |
+| 7 | liveness-monitor | silent outage | dead-man's-switch: scans log heartbeats, health cron DMs if stale | BUILT |
 
 ## Reused Signal Skills
 

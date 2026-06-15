@@ -35,7 +35,7 @@ claude-code dynamic workflows. A skill must run unmodified across all three back
 The owner manages a **$1M tradfi book** + a **~$177k crypto book** and has **no time to research**, so
 keeps missing time-sensitive opportunities. Reach a state where the owner never again misses a setup
 like these because nobody was watching:
-- Google (GOOGL), Spring 2025 — quality stock −30% from 52w ATH.
+- Google (GOOGL), Spring 2025 — quality stock −30% from 52w high.
 - SanDisk (WDC), Sept 2025 — FT/WSJ AI-supply-chain narrative built over WEEKS.
 - BTC, April 2025 — $61k, −43% from ATH, Fear&Greed sub-20, funding negative.
 Each was obvious in hindsight and time-boxed (days). The advisor surfaces them **same-day, with a

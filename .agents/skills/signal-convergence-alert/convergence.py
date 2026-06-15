@@ -5,8 +5,8 @@ independent sources. The point: a ticker that shows up in BOTH a dip screen AND 
 AND a 13F buy is a high-conviction, time-sensitive convergence — DM it immediately.
 
 Reads (any subset that exists):
-  /tmp/dip_candidates.jsonl   {"ticker": "...", ...}            source=dip
-  /tmp/narrative.jsonl        {"ticker": "...", ...}            source=journalism
+  ~/.openclaw/workspace/investor/pools/dip_candidates.jsonl   {"ticker": "...", ...}   source=dip (≤5d)
+  ~/.openclaw/workspace/investor/pools/narrative.jsonl        {"ticker": "...", ...}   source=journalism (≤5d)
   <13F ledger>.jsonl          {"ticker": "...", ...}            source=13f       (last 14d)
   <congress ledger>.jsonl     {"ticker": "...", ...}            source=congress  (last 14d)
 
@@ -20,9 +20,13 @@ from __future__ import annotations
 import argparse, json, os, sys
 from datetime import datetime, timedelta, timezone
 
+# DURABLE pool paths — NOT /tmp. openclaw isolated cron sessions don't share /tmp, so the dip job
+# (07:45) and convergence job (08:30) run in separate sandboxes; the pool MUST live on disk between them.
+# Daily pools carry a freshness window (stale dips/narratives don't count as "today's convergence").
+_POOLS_DIR = os.path.expanduser("~/.openclaw/workspace/investor/pools")
 POOLS = [
-    ("dip", os.environ.get("DIP_POOL", "/tmp/dip_candidates.jsonl"), None),
-    ("journalism", os.environ.get("NARRATIVE_POOL", "/tmp/narrative.jsonl"), None),
+    ("dip", os.environ.get("DIP_POOL", os.path.join(_POOLS_DIR, "dip_candidates.jsonl")), 5),
+    ("journalism", os.environ.get("NARRATIVE_POOL", os.path.join(_POOLS_DIR, "narrative.jsonl")), 5),
     ("13f", os.environ.get("THIRTEENF_LEDGER", os.path.expanduser("~/.openclaw/workspace/investor/13f/recommended.jsonl")), 14),
     ("congress", os.environ.get("CONGRESS_LEDGER", os.path.expanduser("~/.openclaw/workspace/investor/congress/recommended.jsonl")), 14),
 ]
