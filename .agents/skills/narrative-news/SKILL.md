@@ -27,28 +27,30 @@ only reports what happened, deduped and state-aware.
 - **Events, not articles** — the same event across N outlets is ONE event with `source_count=N` (NFR2).
 - **Never re-surface** an event already `surfaced_to_panel_on` a prior run (the no-re-alert rule).
 
-## Pipeline (run order)
+## Pipeline — ONE deterministic command (preferred; reliable)
+
+Do NOT hand-orchestrate 8 WebFetch calls (that path is fragile and failed in iteration 1). Run the
+deterministic fetcher: it pulls every crypto-native RSS feed via urllib, normalizes, ingests (dedup +
+state), and returns the **ranked, question-relevant** deduped events in one shot.
 
 ```bash
-S="python3 .agents/skills/crypto-news-store/news_store.py"
-
-# 1. FETCH + NORMALIZE — call each feed-* adapter; collect their normalized records into one JSON list.
-#    Each returns {source,url,title,published_at,summary,lang,tags} or a clean [UNAVAILABLE] (skip those).
-#    Politeness/backoff is each adapter's job. Write the merged list to records.json.
-
-# 2. INGEST — dedup (exact + near-dup) + state, idempotent across runs.
-$S ingest --json records.json            # → {new, duplicate, events_touched}
-
-# 3. NEW-SINCE — the state-aware feed: events first_seen/updated within the recency window AND not yet
-#    surfaced. Default 36h (PRD NFR3: rolling 24–48h). Use --days 2 and drop >48h items to context.
-$S new-since --days 2
-
-# 4. (optional) QUERY for a specific entity the brief is about, e.g. the asset under review:
-$S query --q "BTC ETF flows MSTR" --days 2 --k 10
-
-# 5. After the brief is written, the workflow marks these surfaced so they don't repeat next run:
-$S mark-surfaced --ids <event_cluster_ids...>
+python3 .agents/skills/crypto-news-store/news_fetch.py \
+  --db crypto/news/news.db --days 5 \
+  --query "<key entities from the question: e.g. bitcoin BTC ETF Strategy MicroStrategy treasury Fed Coinbase COIN>"
+# → {fetched, feeds_ok, unavailable:[...], events:[ {title, source_count, ...} ranked by relevance ]}
 ```
+`--query` returns the hybrid (BM25 + near-dup) **relevant** events and cuts the new-since noise; omit it to
+get everything new-since. Build `--query` from the asset(s)/entities in the workflow question. Per-feed
+failures come back in `unavailable` (loud, NFR6) — never silently dropped.
+
+After the brief is written, the workflow marks events surfaced so they don't repeat next run:
+```bash
+python3 .agents/skills/crypto-news-store/news_store.py --db crypto/news/news.db mark-surfaced --ids <ids...>
+```
+
+**Fallback (only if news_fetch fails):** call the individual [[feed-decrypt]]…/[[feed-ft]] adapters by hand,
+merge their `{source,url,title,published_at,summary,...}` records into one JSON, then
+`news_store.py ingest --json records.json` and `query`/`new-since` as above.
 
 ## Recency + materiality filter (NFR3)
 

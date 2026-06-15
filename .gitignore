@@ -36,3 +36,5 @@ session.txt
 
 # committee report outputs (recommendations — not committed)
 reports/
+crypto/news/
+.agents/skills/crypto-news-store/.fetch_tmp.json
