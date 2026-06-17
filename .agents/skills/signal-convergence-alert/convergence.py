@@ -110,7 +110,22 @@ def converge(min_sources: int = 2) -> dict:
         if len(srcs) >= min_sources:
             hits.append({"ticker": t, "sources": srcs, "n_sources": len(srcs), "notes": e["notes"]})
     hits.sort(key=lambda x: x["n_sources"], reverse=True)
-    return {"min_sources": min_sources, "convergences": hits, "pools_read": [p for _, p, _ in POOLS if os.path.exists(p)]}
+
+    # Routing: tickers with ≥3 independent sources are HIGH-conviction and should be
+    # escalated to multi-lens-quorum for a full buy/hold/pass verdict.
+    # ≥2 sources = DM alert (may be correlated).
+    # ≥3 sources = quorum-worthy (unlikely to be coincidental).
+    QUORUM_THRESHOLD = 3
+    quorum_route = [h for h in hits if h["n_sources"] >= QUORUM_THRESHOLD]
+    alert_only = [h for h in hits if h["n_sources"] < QUORUM_THRESHOLD]
+
+    return {
+        "min_sources": min_sources,
+        "convergences": hits,
+        "quorum_route": quorum_route,   # ≥3 sources → route to multi-lens-quorum
+        "alert_only": alert_only,        # 2 sources → DM but no quorum
+        "pools_read": [p for _, p, _ in POOLS if os.path.exists(p)],
+    }
 
 
 def main():
@@ -132,10 +147,21 @@ def main():
     if not r["convergences"]:
         print(f"  No ticker hit by >= {a.min_sources} independent sources today.")
     else:
-        for h in r["convergences"]:
-            print(f"  [{h['n_sources']}x] {h['ticker']:6s}  sources: {', '.join(h['sources'])}")
-            for n in h["notes"]:
-                print(f"          - {n}")
+        # Show quorum-worthy tickers first (≥3 sources)
+        if r["quorum_route"]:
+            print("  >>> QUORUM ROUTING (>=3 sources — route to multi-lens-quorum) <<<")
+            for h in r["quorum_route"]:
+                print(f"  [{h['n_sources']}x] {h['ticker']:6s}  sources: {', '.join(h['sources'])}")
+                for n in h["notes"]:
+                    print(f"          - {n}")
+            print()
+        # Then regular alerts (2 sources)
+        if r["alert_only"]:
+            print("  --- DM ALERTS (2 sources — correlated, not quorum-worthy) ---")
+            for h in r["alert_only"]:
+                print(f"  [{h['n_sources']}x] {h['ticker']:6s}  sources: {', '.join(h['sources'])}")
+                for n in h["notes"]:
+                    print(f"          - {n}")
     print("\n  Educational only — not advice.\n")
 
 
