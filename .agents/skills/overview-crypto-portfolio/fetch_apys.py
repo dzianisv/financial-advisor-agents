@@ -185,7 +185,7 @@ def find_better_pool(current_apy, asset_sym, chain, all_pools):
     if not candidates:
         return None
 
-    candidates.sort()
+    candidates.sort(key=lambda x: (x[0], x[1]))
     return candidates[0][2]
 
 # --- Position table: what we know about the portfolio (USD size, asset, chain) ---
