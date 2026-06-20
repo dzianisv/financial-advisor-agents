@@ -34,6 +34,91 @@ BEFORE any order exists. No untested idea reaches a live order. "No edge found" 
 | "Weekly portfolio review" | `tradfi-portfolio-manager` | REVIEW→ASSESS→RESEARCH→DECIDE→ORDER |
 | Compare two research outputs | `pairwise-eval` workflow | Blind A/B, N judges |
 
+## How to invoke workflows and skills
+
+> Why this section exists: routing table tells you *what* to use; this tells you *how* to call it correctly so nothing silently defaults.
+
+### Invoking a workflow
+
+Use the `Workflow` tool with `name` (for registered workflows) or `scriptPath` (for direct file invocation).
+
+<workflow_invocation_example>
+```js
+// research-market — always pass date (workflow cannot call Date.now())
+Workflow({
+  name: "research-market",
+  args: {
+    query: "find overlooked AI supply chain stocks not yet surged",
+    date: "2026-06-20",           // required — ISO date string, today's date
+    prior_context: "...",          // inject from memory before each run (see below)
+    portfolio: "",                 // optional — omit if no holdings to disclose
+  }
+})
+
+// pairwise-eval — compare two research outputs
+Workflow({
+  name: "pairwise-eval",
+  args: { a: "/path/to/output-a.md", b: "/path/to/output-b.md", rubric: "..." }
+})
+
+// hedge-fund-committee — open-universe weekly buy memo
+Workflow({ name: "hedge-fund-committee" })
+```
+</workflow_invocation_example>
+
+**`args` rules:**
+- Always pass `date` as `"YYYY-MM-DD"` — workflows throw if they call `Date.now()`, so they rely on the caller.
+- `prior_context` is the CIO memory layer (see below). Omitting it means the workflow runs blind.
+- `query` accepts natural language — the `research-manager` inside interprets it; no need to pre-format tickers.
+- Never pass `assets: [...]` unless you want to force-override the autonomous screener.
+
+### Invoking a skill
+
+Use the `Skill` tool with the skill's directory name (no path, no `.md`).
+
+<skill_invocation_example>
+```js
+Skill({ skill: "research-market" })       // triggers the research-market workflow via its skill wrapper
+Skill({ skill: "dip-scanner" })           // runs the unified dip scan
+Skill({ skill: "13f-watch" })             // runs 13F institutional filing monitor
+Skill({ skill: "multi-lens-quorum" })     // convenes independent lenses for a judgment call
+Skill({ skill: "superforecasting" })      // logs a dated probability forecast to the ledger
+```
+</skill_invocation_example>
+
+Skills are narrative instructions — they tell YOU (the agent) how to act. Workflows are executable pipelines — they spawn subagents autonomously. When in doubt: skills for single-step reasoning tasks; workflows for multi-phase fan-out research.
+
+### The CIO memory inject pattern (mandatory before research-market)
+
+The workflow is stateless. You are the CIO. Before every `research-market` run, read the project memory log and inject prior findings as `prior_context`. This prevents re-screening names already on the watchlist and lets the team check whether entry conditions have fired.
+
+<cio_memory_inject_example>
+```
+Step 1 — Read memory:
+  cat /Users/engineer/workspace/backtest/.agents/memory/2026-06-20.md
+  (or whatever the most recent date file is)
+
+Step 2 — Summarize relevant watchlist entries in one compact block:
+  prior_context = """
+  Watchlist as of 2026-06-20:
+  - PLAB: T2 WAIT | entry $29-31 | condition: Q3 margin >34% | invalidation: margin ≤31%
+  - RMBS: T2 WAIT | entry $100-110 | condition: DOJ closed cleanly | blocked until DOJ resolves
+  - AEHR: AVOID — fwd P/E 1862x, FMR trimming, no entry
+  """
+
+Step 3 — Pass as args:
+  Workflow({ name: "research-market", args: { query: "...", date: "...", prior_context } })
+```
+</cio_memory_inject_example>
+
+The `research-manager` inside the workflow reads `prior_context` and biases `screen_scope` accordingly — skipping known-avoid names and flagging when a watchlist condition may have fired.
+
+### Post-run memory save (mandatory after research-market)
+
+After every research workflow completes, append findings to the project daily log **before** responding to the user. See the format in `~/.agents/AGENTS.md` → "Workflow post-run". Then commit + push so the DoD gate passes.
+
+---
+
 **Three non-overlapping jobs — keep them distinct:**
 - `trend-stock-research` *finds WHICH* names (discovery → watchlist of hypotheses)
 - `multi-lens-quorum` *judges WHETHER / how much* (buy/hold/size verdict)
