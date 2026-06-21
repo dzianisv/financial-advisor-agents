@@ -20,12 +20,12 @@ if (!url) {
   process.exit(1);
 }
 
-// 1. Cache check
+// 1. Cache check — exact URL lookup (avoids FTS5 syntax errors from dots in URLs)
 if (!noCache) {
   try {
-    const cached = await $`python3 ${FETCH_PY} --search ${url} --limit 1`.text();
-    if (cached.trim()) {
-      process.stdout.write(cached);
+    const cached = await $`python3 ${FETCH_PY} --by-url ${url}`.json();
+    if (cached && cached.body && !cached.body.startsWith("[UNAVAILABLE")) {
+      process.stdout.write(cached.body);
       process.exit(0);
     }
   } catch {

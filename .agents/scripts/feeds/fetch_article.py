@@ -435,6 +435,7 @@ def main():
     parser = argparse.ArgumentParser(description="Cache-first article fetcher")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--url", help="URL to fetch")
+    group.add_argument("--by-url", metavar="URL", help="Exact URL cache lookup (no fetch)")
     group.add_argument("--search", metavar="QUERY", help="BM25 full-text search")
     group.add_argument("--stats", action="store_true", help="Show DB stats")
     group.add_argument("--prune-days", type=int, metavar="N", help="Prune entries older than N days")
@@ -459,6 +460,20 @@ def main():
     if args.search:
         results = search_articles(args.search, source_filter=args.source or None, limit=args.limit)
         print(json.dumps(results, indent=2))
+        return
+
+    if args.by_url:
+        conn = get_db()
+        today = date.today().isoformat()
+        row = conn.execute(
+            "SELECT url, title, body, source, fetched_date FROM articles WHERE url = ? ORDER BY fetched_date DESC LIMIT 1",
+            (args.by_url,),
+        ).fetchone()
+        conn.close()
+        if row:
+            print(json.dumps({"url": row[0], "title": row[1], "body": row[2], "source": row[3], "fetched_date": row[4], "cache_hit": True}, indent=2))
+        else:
+            print(json.dumps({}))
         return
 
     # --url path
