@@ -15,6 +15,40 @@ Analyze every token in the universe **sequentially** → decide BUY/SELL/HOLD pe
 
 > Educational analysis, not financial advice. No leverage. Ever.
 
+## Quickstart
+
+### Default daily run
+```
+Run the crypto portfolio manager
+```
+The skill analyzes the default token universe, pulls live TradingView data, runs a 5-seat quorum per token, and prints the full 3-block report (signal table + plain-English verdicts + ranked news sources). **Attach a TradingView screenshot for each token.**
+
+### Custom token set
+```
+Run the crypto portfolio manager on: TON, PUMP, JUP, HYPE
+```
+
+### Full prompt (copy-paste for any session)
+```
+Invoke the crypto-portfolio-manager skill. Token universe for this run: [TOKEN1, TOKEN2, ...].
+Follow all skill instructions:
+- chart_get_state → dedup indicators → set_symbol → D OHLCV (365 summary + 210 bars) → study values → W OHLCV → capture_screenshot
+- Compute MAs via .agents/skills/crypto-portfolio-manager/scripts/indicators.py
+- Run 5-seat quorum inline (on-chain, sentiment, macro, order-flow, narrative)
+- Narrative seat: web-fetch ≥3 sources, rank T1/T2/T3, quote exact sentences
+- Print 3-block report: signal table | plain-English verdicts | news sources
+- Attach TradingView screenshot for each token in the reply
+Educational, not financial advice.
+```
+
+### Scheduling (continuous)
+```
+/loop interval=6h    ← re-runs every 6 hours, resumes from last pending todo
+/stop                ← cancel the loop
+```
+
+---
+
 ## Token universe
 
 BTC, ETH, SOL, UNI, HYPE, AAVE, LINK — edit this list to add/remove tokens.
@@ -72,7 +106,8 @@ tradingview-data_get_ohlcv       count=210 summary=false  → >=200 daily closes
 tradingview-data_get_study_values                          → RSI(14), BB(20,2), MACD, Volume (one of each)
 tradingview-chart_set_timeframe  timeframe="W"
 tradingview-data_get_ohlcv       count=210 summary=false  → weekly closes (for 200-week MA)
-tradingview-chart_set_timeframe  timeframe="D"             → reset
+tradingview-chart_set_timeframe  timeframe="D"             → reset to daily
+tradingview-capture_screenshot                             → **REQUIRED** attach this image in the reply for this token
 ```
 
 **1b. Read the indicators from TradingView; compute only the moving averages.** From `data_get_study_values` take RSI(14), Bollinger(20,2), MACD line/signal/hist, Volume — verbatim, no recompute. From the daily `summary=true` pull take 52w high/low + avg volume. Then fill the MA gap (computed MAs match TradingView's own values):
@@ -198,7 +233,7 @@ ETH narrative (posture: BEARISH)
   ...
 ```
 
-Self-check before printing: every token has `status='done'` in `token_analysis`, `seats_bull + seats_bear <= 5` for each, and every narrative source block has ≥3 URLs with actual links (not placeholders).
+Self-check before printing: every token has `status='done'` in `token_analysis`, `seats_bull + seats_bear <= 5` for each, every narrative source block has ≥3 URLs with actual links (not placeholders), and a TradingView screenshot is attached for every token.
 
 ## Running continuously
 
