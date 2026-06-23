@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/engineer/workspace/backtest/.claude/hooks/log-web-fetch.sh",
+            "command": "bun /Users/engineer/workspace/backtest/.claude/hooks/log-web-fetch.ts",
             "statusMessage": "Logging fetch..."
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/engineer/workspace/backtest/.claude/hooks/validate-citations.sh",
+            "command": "bun /Users/engineer/workspace/backtest/.claude/hooks/validate-citations.ts",
             "statusMessage": "Validating citations..."
           }
         ]
