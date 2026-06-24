@@ -1,291 +1,182 @@
-# 📊 Crypto Portfolio Review — June 23, 2026
+# Crypto Portfolio Run — 2026-06-23
 
-> **Educational analysis only. Not financial advice. No leverage. Ever.**
-> Data sources: yfinance (BTC/ETH/SOL/AAVE/LINK), OKX API (UNI/HYPE), alternative.me F&G, CoinDesk, TheBlock, DeFiLlama.
-> TradingView MCP unavailable for symbol switching today (stale session on LINK). Indicators computed from exchange OHLCV closes.
-
----
-
-## 🗂️ Signal Summary
-
-| Token | Signal | Zone | Quorum | 🐂/🐻 | Price | RSI | Death ✗ | vs ATH |
-|-------|--------|------|--------|--------|-------|-----|---------|--------|
-| BTC | **BUY (small)** | DEEP_VALUE | SPLIT | 2/3 | $62,486 | 25.2 | ⚠️ YES | -46% |
-| ETH | HOLD | DEEP_VALUE | BEARISH | 1/3 | $1,660 | 24.1 | ⚠️ YES | -61% |
-| SOL | **BUY (small)** | DEEP_VALUE | SPLIT | 2/2 | $68.93 | 32.5 | ⚠️ YES | -67% |
-| UNI | HOLD | FAIR_VALUE | UNCERTAIN | 0/2 | $2.90 | 48.8 | ⚠️ YES | -68% |
-| HYPE | HOLD | ELEVATED | SPLIT | 2/0 | $62.90 | 49.0 | ✅ NO | -16% |
-| AAVE | **BUY (small)** | DEEP_VALUE | SPLIT | 2/0 | $71.84 | 44.7 | ⚠️ YES | -73% |
-| LINK | **BUY (small)** | DEEP_VALUE | SPLIT | 2/1 | $7.60 | 23.4 | ⚠️ YES | -60% |
-
-**4 BUY (small), 3 HOLD, 0 SELL.** Broad deep-value accumulation zone — but trend is bearish on all names except HYPE.
+**Generated:** 2026-06-23 23:47 PDT  
+**Data sources:** TradingView MCP (primary), CoinGecko fallback (AERO, PUMP)  
+**F&G:** 17 — Extreme Fear
 
 ---
 
-## 🌡️ Market Context
-
-- **Fear & Greed:** 23 — *Extreme Fear* (7th consecutive day)
-- **Dominant narrative shift:** Iran risk faded; now the **AI/tech trade wobble** is the primary driver (Nasdaq -1.3% today)
-- **MSTR:** $9.4B underwater on 847k BTC; preferred dividend burden ~$1.7B/year; funding flywheel reversing
-- **Macro calendar:** Jobs report Jul 2 · CPI Jul 14 · Q2 earnings (AI names) mid-late July
-
----
-
-## 📖 Token Deep-Dives
-
-### 🟠 BTC — BUY (small) | $62,486 | RSI 25.2
-
-**Technical structure:**
-- EMA20: $65,022 | SMA50: $71,460 | SMA200: $76,448 | 200-week MA: $86,942
-- Death cross active. Price is 28% below the 200-week MA — deeper than typical cycle troughs.
-- MACD histogram turning positive (+377) → momentum inflection forming.
-- BB position: 34th percentile (lower band area).
-
-**5-seat quorum:**
-| Seat | Posture | Key signal |
-|------|---------|-----------|
-| On-chain | BULLISH | RSI 25, -46% from ATH, extreme capitulation zone |
-| Sentiment | BULLISH | F&G 23 = Extreme Fear × 7 days; contrarian signal |
-| Macro | BEARISH | AI/tech selloff contagion; MSTR pressure; 3 macro catalysts ahead |
-| Order-flow | BEARISH | Death cross, volume below avg, all MAs above price |
-| Narrative | BEARISH | CoinDesk: tech trade wobble now dominates; MSTR $9.4B underwater |
-
-**Framework:**
-- 15–20% of BTC dry powder here as Tranche 1
-- Ladder: $55k → $50k → $45k
-- Confirmation add: daily close above 200-DMA (~$76k)
-- No full deployment before Micron results (Wed) and FOMC-style catalysts
-
-**Main risk:** Tech earnings season extends selloff below $59k (52-week low).  
-**Watch:** EMA20 reclaim ($65k) = momentum repair.
-
----
-
-### 🔵 ETH — HOLD | $1,660 | RSI 24.1
-
-**Technical structure:**
-- EMA20: $1,752 | SMA50: $1,965 | SMA200: $2,350 | 200-week MA: $2,838
-- -41.5% below 200-week MA — deepest dislocation in ETH's history vs this metric.
-- Death cross active. MACD hist improving (+15.6) but still negative.
-
-**5-seat quorum:**
-| Seat | Posture | Key signal |
-|------|---------|-----------|
-| On-chain | BULLISH | RSI 24, -61% from ATH → deep capitulation |
-| Sentiment | BEARISH | EF 20% layoff = organizational stress signal |
-| Macro | BEARISH | L2 fee erosion, Dencun pressure, tech rotation |
-| Order-flow | BEARISH | Death cross, volume well below avg |
-| Narrative | BEARISH | EF cuts 54 staff, 5-cluster restructuring — uncertainty |
-
-**Headline catalyst today:** Ethereum Foundation cut 20% of workforce (54 people) and reorganized into 5 operational clusters. Departing EF execs include two co-executive directors.
-
-**Why HOLD not BUY(small):** On-chain is deep value but 3 of 5 seats are bearish. ETH/BTC ratio still compressing. Foundation layoffs inject organizational risk on top of technical bearishness.
-
-**Main risk:** ETH/BTC continues sliding; L2 fee compression structural.  
-**Watch:** EF restructuring completes cleanly + ETH/BTC stabilizes → upgrade to BUY (small).
-
----
-
-### 🟣 SOL — BUY (small) | $68.93 | RSI 32.5
-
-**Technical structure:**
-- EMA20: $71.67 | SMA50: $79.20 | SMA200: $96.75 | 200-week MA: $150.97
-- -54% below 200-week MA. At 52-week low zone ($60.41).
-- MACD hist improving (+0.81). BB at 51.5% — near mid-band.
-
-**5-seat quorum:**
-| Seat | Posture | Key signal |
-|------|---------|-----------|
-| On-chain | BULLISH | RSI approaching oversold at 32.5; at 52wL support |
-| Sentiment | BULLISH | F&G 23 extreme fear; contrarian signal |
-| Macro | BEARISH | AI tech rotation; SOL correlates with AI narrative |
-| Order-flow | BEARISH | Death cross, all MAs above price, volume below avg |
-| Narrative | NEUTRAL | No SOL-specific catalyst today; macro dominant |
-
-**Why BUY (small):** SPLIT with DEEP_VALUE zone. At $60–68 = multi-year support band. First tranche logic applies.
-
-**Main risk:** $60 52-week low breaks on weekly close → no technical support to $45.  
-**Watch:** Weekly close above $75 (BB upper) = trend repairing.
-
----
-
-### 🦄 UNI — HOLD | $2.90 | RSI 48.8
-
-**Technical structure:**
-- EMA20: $2.92 | SMA50: $3.14 | SMA200: $3.95 | 200-week MA: $5.12
-- RSI 48.8 = neutral (NOT oversold — key differentiator from other names)
-- BB at 62% = above mid-band. Death cross active.
-
-**5-seat quorum:**
-| Seat | Posture | Key signal |
-|------|---------|-----------|
-| On-chain | NEUTRAL | RSI neutral; no cashflow accrual to token |
-| Sentiment | NEUTRAL | BlackRock invested (Feb 2026); positive long-term signal |
-| Macro | BEARISH | DeFi headwinds; fee switch still pending |
-| Order-flow | BEARISH | Death cross, price below all MAs |
-| Narrative | NEUTRAL | Fee switch governance pending; no near-term catalyst |
-
-**Key structural note:** UNI token has **no fee accrual**. Fee switch vote still pending in governance. This makes the token more like an option on a fee switch than a cashflow asset. RSI 49 at -68% ATH = price hasn't capitulated like the other names — it's been grinding, not crashing.
-
-**Main risk:** Fee switch fails → fundamental thesis collapses.  
-**Watch:** Fee switch vote passes → hard upgrade to BUY.
-
----
-
-### ⚡ HYPE — HOLD | $62.90 | RSI 49.0
-
-**Technical structure:**
-- EMA20: $64.92 | SMA50: $57.96 | SMA200: $38.72 | 200-week MA: $38.69
-- **GOLDEN CROSS** (SMA50 > SMA200) — only name in portfolio with bullish MA structure
-- +62.6% above 200-week MA. -16% from 52-week high ($74.89).
-- MACD hist slightly negative (-0.796).
-
-**On-chain/fundamental:**
-- Hyperliquid L1 TVL: $1.448B | Perps volume (24h): $9.23B | App revenue (24h): $2.11M
-- Weekly perps volume $47.8B (-12% WoW — slight softening)
-- $HYPE market cap: $13.86B | FDV: $59.5B
-
-**5-seat quorum:**
-| Seat | Posture | Key signal |
-|------|---------|-----------|
-| On-chain | NEUTRAL | RSI 49, golden cross, -16% from ATH = healthy retracement |
-| Sentiment | NEUTRAL | F&G 23 but HYPE's own fundamentals decoupled |
-| Macro | BULLISH | $2.11M/day app revenue accruing to token; perps dominance growing |
-| Order-flow | NEUTRAL | MACD slightly negative; price below EMA20 but above SMA50 |
-| Narrative | BULLISH | Perps volume $9.23B/24h; DEX dominant in derivatives |
-
-**Why HOLD not BUY:** Zone is ELEVATED (above 200wMA by 62%). No margin of safety at current levels. Risk-off macro = high-beta add unwise. Better to wait for a $52–58 pullback (SMA50 zone) for a cleaner entry.
-
-**Main risk:** Broad crypto risk-off brings HYPE to SMA50 ($58) or lower.  
-**Watch:** Perps volume sustaining >$8B/day = bull thesis intact.
-
----
-
-### 🔮 AAVE — BUY (small) | $71.84 | RSI 44.7
-
-**Technical structure:**
-- EMA20: $72.91 | SMA50: $80.73 | SMA200: $117.65 | 200-week MA: $186.46
-- -61.5% below 200-week MA. RSI 44.7 (recovering, not capitulation).
-- MACD hist improving (+1.41). BB at 63% = above mid-band.
-
-**Institutional catalyst today:**
-- Midas launched mGLOBAL on **Aave Horizon** — institutional tokenized alternative debt (Fasanara Capital's $6B strategy)
-- Aave outstanding loans: $7.17B (down from $10B post-KelpDAO; recovering)
-- Aave cumulative originations: **>$1 trillion**
-
-**5-seat quorum:**
-| Seat | Posture | Key signal |
-|------|---------|-----------|
-| On-chain | BULLISH | -73% from ATH; MACD improving; deepest value in universe |
-| Sentiment | NEUTRAL | F&G 23 + institutional adoption signal (mGLOBAL) |
-| Macro | NEUTRAL | RWA tokenization boom = structural tailwind; but risk-off = headwind |
-| Order-flow | NEUTRAL | Death cross, but price above BB mid; MACD improving |
-| Narrative | BULLISH | mGLOBAL institutional product launch = concrete adoption catalyst |
-
-**Why highest-conviction BUY:** Only name with (a) deep value zone AND (b) same-day institutional catalyst AND (c) improving MACD momentum.
-
-**Main risk:** Outstanding debt stays compressed below $7B → fee revenue headwind.  
-**Watch:** Outstanding debt recovering to $8.5B = full demand return.
-
----
-
-### 🔗 LINK — BUY (small) | $7.60 | RSI 23.4
-
-**Technical structure:**
-- EMA20: $8.08 | SMA50: $8.93 | SMA200: $10.07 | 200-week MA: $14.52
-- **RSI 23.4 = most oversold reading in the 7-token universe**
-- BB at 21.9% = near lower Bollinger Band. -47.6% below 200-week MA.
-- MACD hist improving (+0.026). Death cross active.
-
-**Fundamental:**
-- Oracle layer for Swift, Euroclear, Fidelity International, UBS, JPMorgan (Kinexys), Aave, GMX, Lido
-- Backbone infrastructure for $6B+ tokenized RWA sector
-- "Tens of trillions in transaction value" enabled (DeFiLlama)
-
-**5-seat quorum:**
-| Seat | Posture | Key signal |
-|------|---------|-----------|
-| On-chain | BULLISH | RSI 23.4 = deepest oversold; BB 22nd percentile |
-| Sentiment | BULLISH | Extreme Fear + LINK at multi-year low = contrarian accumulation |
-| Macro | NEUTRAL | RWA tokenization is LINK's structural driver; macro headwinds offset |
-| Order-flow | BEARISH | Death cross, all MAs above price, volume below avg |
-| Narrative | NEUTRAL | Strong institutional adoption (DeFiLlama) but no new catalyst today |
-
-**Why BUY (small):** RSI 23 + extreme fear + BB lower band = statistically rare combination historically associated with multi-week bottoming processes. Fundamental durability (institutional oracle) reduces risk of zero.
-
-**Main risk:** On-chain activity stays low → oracle revenue compression.  
-**Watch:** EMA20 reclaim ($8.08) = buy confirmation.
-
----
-
-## 📰 Sources
-
-| Source | URL | Date | Used for |
-|--------|-----|------|---------|
-| Fear & Greed API | https://api.alternative.me/fng/?limit=7 | 2026-06-22 | All tokens: sentiment baseline |
-| CoinDesk Markets | https://www.coindesk.com/markets/2026/06/23/bitcoin-slips-toward-usd63-000-as-a-tech-selloff-drags-risk-assets-lower | 2026-06-23 | BTC: narrative driver |
-| TheBlock — Strategy | https://www.theblock.co/post/405791/strategy-the-capital-stack-meets-a-falling-bitcoin-price | 2026-06-23 | BTC: MSTR risk |
-| TheBlock — EF layoffs | https://www.theblock.co/post/405809/ethereum-foundation-cuts-20-of-its-workforce-as-new-5-cluster-structure-takes-shape | 2026-06-23 | ETH: narrative |
-| TheBlock — Aave Horizon | https://www.theblock.co/post/405774/midas-mglobal-fasanara-aave-horizon | 2026-06-23 | AAVE: catalyst |
-| DeFiLlama — Hyperliquid | https://defillama.com/chain/hyperliquid-l1 | 2026-06-23 | HYPE: fundamentals |
-| DeFiLlama — Chainlink | https://defillama.com/protocol/chainlink | 2026-06-23 | LINK: fundamentals |
-| DeFiLlama — Uniswap | https://defillama.com/protocol/uniswap | 2026-06-23 | UNI: BlackRock investment |
-
----
-
-*Generated by crypto-portfolio-manager skill · 2026-06-23 · Educational use only*
-
----
-
-## 📱 Telegram Daily Recap
-
-> Copy-paste this to your crypto insights channel:
+## Block 1 — Signal Table
 
 ```
-📊 Daily Crypto Brief — June 23, 2026
+=== CRYPTO PORTFOLIO RUN — 2026-06-23 ===
 
-🌡️ Mood: Extreme Fear (F&G 23) — 7th day straight
+Token | Signal      | Zone       | Quorum   | Bulls/Bears | Price   | %ATH
+------|-------------|------------|----------|-------------|---------|------
+AAVE  | BUY ★       | DEEP_VALUE | BULLISH  | 3 / 1       | $71.86  | -77%
+BTC   | BUY (small) | DEEP_VALUE | SPLIT    | 2 / 2       | $62,797 | -50%
+ETH   | BUY (small) | DEEP_VALUE | SPLIT    | 1 / 2       | $1,673  | -63%
+SOL   | BUY (small) | DEEP_VALUE | SPLIT    | 1 / 2       | $69.94  | -67%
+JUP   | BUY (small) | FAIR_VALUE | BULLISH  | 3 / 0       | $0.210  | -60%
+UNI   | BUY (small) | DEEP_VALUE | SPLIT    | 2 / 1       | $2.911  | -71%
+LINK  | BUY (small) | DEEP_VALUE | SPLIT    | 2 / 2       | $7.647  | -70%
+TON   | HOLD        | DEEP_VALUE | UNCERTAIN| 1 / 0       | $1.556  | -51%
+HYPE  | HOLD        | FAIR_VALUE | SPLIT    | 1 / 0       | $62.16  | -19%
+AERO  | HOLD        | FAIR_VALUE | UNCERTAIN| 1 / 0       | $0.527  | -64%
+PUMP  | HOLD        | FAIR_VALUE | BEARISH  | 0 / 2       | $0.0014 | -56%
+```
 
-📉 Macro: Tech trade wobbles. AI/chip selloff (Nasdaq -1.3%) spills into crypto. Iran risk gone; Micron earnings Wed, CPI Jul 14 are the next gates.
+**Macro context:** F&G 17 (Extreme Fear). Chip/AI selloff: Nasdaq -3.3%, S&P -1.4%. BTC ETF outflows $6B+ in 30 days. Death crosses active on BTC/ETH/SOL/AAVE/LINK/UNI. HYPE/JUP/AERO in golden cross structures.
+
+---
+
+## Block 2 — Plain-English Verdicts
+
+### AAVE — BUY ★
+AAVE is the standout BUY of this run. Down 77% from its 52-week high of $331, currently at $71.86 — 47.5% below its 200-week moving average ($136.79), a historically rare discount. The MACD histogram is +1.17, the strongest positive momentum turn in the entire portfolio. Today's live catalyst: Midas launched mGLOBAL (Fasanara Capital's $6B alternative debt strategy) on Aave Horizon, Aave's institutional RWA market [source: https://www.theblock.co/post/405774/midas-mglobal-fasanara-aave-horizon]. Aave has originated over $1 trillion in cumulative loans. Three of five quorum seats are BULLISH (on-chain deep value, order-flow turning, RWA narrative catalyst). Key risk: DeFi lending activity dropped from $10B to $7.17B outstanding — watch for recovery. Upgrade trigger: daily close above BB upper $79.97 or SMA50 $80.39.
+
+### BTC — BUY (small)
+BTC is at $62,797 — exactly 0.5% above its 200-week moving average ($62,459), the historical long-term bull-market floor. RSI has recovered to 37.65 from the extreme low of ~17 earlier this month, and the MACD histogram is positive (+349), signaling momentum improvement. However, a death cross (SMA50 $71,160 < SMA200 $76,358) remains active and ETF outflows have reached a record $6B+ over 30 days [source: https://www.coindesk.com/markets/2026/06/24/bitcoin-drops-toward-usd62-000-as-the-chip-selloff-deepens-for-a-second-day]. CryptoQuant recommends Strategy pause BTC purchases due to cash reserves declining 38% and dividend obligations quadrupling to $1.2B/year [source: https://www.theblock.co/post/405885/cryptoquant-strategy-should-pause-bitcoin-purchases-rebuild-cash-reserves]. Start a small first tranche at 200w MA support; ladder more at $55k/$50k. Watch: daily close above SMA50 $71k to upgrade.
+
+### ETH — BUY (small)
+ETH is at $1,673 — 32% below its 200-week moving average ($2,472), a level historically associated with cycle lows. App revenue $1.37M/day, TVL $38B [source: https://defillama.com/chain/ethereum]. The Ethereum Foundation cut 20% of its workforce today as part of a restructuring [source: https://www.theblock.co/news/ecosystems]. On the bullish side, Ethlabs — backed by Ethereum co-founder Joe Lubin, Bitmine, and SharpLink — launched to accelerate institutional adoption [source: https://www.theblock.co/post/405694/bitmine-sharplink-and-joe-lubin-back-ethlabs-nonprofit-to-advance-ethereums-next-phase-of-growth]. Extreme deep value offset by organizational headwinds. Watch: weekly close above 200w MA $2,472 to upgrade.
+
+### SOL — BUY (small)
+SOL at $69.94, down 67% from its 52-week high. 34.5% below 200-week MA ($106.87). On-chain: Solana app revenue $2.82M/day, TVL $4.78B, and stablecoins up +3% over 7 days [source: https://defillama.com/chain/solana] — suggesting real accumulation flows. RSI 43.55 recovering, MACD barely positive. Watch: daily close above EMA20 $71.62 to confirm recovery.
+
+### JUP — BUY (small)
+Jupiter (Solana's leading DEX aggregator) at $0.2102. Price is ABOVE all daily MAs (EMA20 $0.193, SMA50 $0.197, SMA200 $0.184) — golden cross structure. RSI 59.76 (not oversold — recovering momentum). This is more a momentum entry in a recovering alt than a deep-value accumulation. 65.6% below 200-week MA. Risk: Solana ecosystem still in a broader bear trend.
+
+### UNI — BUY (small)
+UNI at $2.911, down 71% from 52w high. The UNIfication proposal passed Dec 25, 2025 — fee switch live, trading fees routing to UNI burns via Firepit contract, 100M UNI burned at launch [source: https://www.theblock.co/news/defi]. BlackRock invested February 2026 [source: https://defillama.com/protocol/uniswap]. 57.6% below 200-week MA. RSI 48.66 (recovering), BB above midband. Death cross active — small tranche now, add on weekly close above SMA200 $3.97.
+
+### LINK — BUY (small)
+LINK at $7.647, down 70% from 52w high. 39% below 200-week MA ($12.53). RSI 36.51 (oversold). MACD barely positive. Chainlink is the backbone of the RWA wave — tens of trillions in transaction value secured; institutional partners include Swift, Euroclear, JPMorgan (Kinexys), UBS, Fidelity [source: https://defillama.com/protocol/chainlink]. Tokenized RWA market cap rose 40% to $51B [source: https://www.theblock.co/post/405578/tokenized-rwa-market-cap-rises-51-billion-industry-races-define-equity-tokenization-model-bernstein]. Death cross active = trend hostile. Small tranche here; ladder at $7.00 support.
+
+### TON — HOLD
+TON at $1.556, down 51% from high. Unusual structure: price AT 200-day MA ($1.554), no death cross. 51.7% below 200-week MA. RSI 40.67 neutral. Durov legal overhang remains binary risk. Hold existing; wait for legal clarity before adding.
+
+### HYPE — HOLD
+HYPE hit ATH $76.975 last week, now at $62.16 (-19% pullback). Only portfolio token UP vs USD ytd (+65%). Perps $9.78B/day, app revenue $2.05M/day [source: https://defillama.com/chain/hyperliquid-l1]. Golden cross, above SMA50 $57.95 and SMA200 $38.80. MACD histogram turning negative after spike. Healthy pullback — hold and add on EMA20 $64.57 reclaim.
+
+### AERO — HOLD
+AERO at $0.527. Aerodrome Finance — Base chain's #1 DEX, TVL $308M, ve(3,3) revenue sharing. Golden cross, price above all MAs, only 20.6% below 200-week MA. Most technically constructive (alongside HYPE). No oversold entry — hold existing; add on dip toward SMA50 $0.428.
+
+### PUMP — HOLD
+PUMP at $0.001408. Reflexive Solana meme launchpad (pump.fun). Tracked as cycle timing signal — when PUMP RSI exceeds 60, Solana meme season is likely returning. Currently RSI 40.60, below all MAs. Not a BUY here.
+
+---
+
+## Block 3 — News & Sources
+
+```
+--- NEWS SOURCES ---
+
+BTC narrative (posture: BEARISH)
+  [T1] https://api.alternative.me/fng/?limit=1 — "value: 17, value_classification: Extreme Fear" → hard data point
+  [T2] https://www.coindesk.com/markets/2026/06/24/bitcoin-drops-toward-usd62-000-as-the-chip-selloff-deepens-for-a-second-day — "$6B+ 30-day ETF outflows; relief rallies to hit hard ceiling"
+  [T2] https://www.theblock.co/post/405885/cryptoquant-strategy-should-pause-bitcoin-purchases-rebuild-cash-reserves — "Strategy dividend obligations quadrupled to $1.2B; pause buying"
+
+ETH narrative (posture: NEUTRAL)
+  [T1] https://defillama.com/chain/ethereum — TVL $38B, App Revenue $1.37M/24h, Chain Revenue $86K/24h
+  [T2] https://www.theblock.co/post/405694/bitmine-sharplink-and-joe-lubin-back-ethlabs-nonprofit-to-advance-ethereums-next-phase-of-growth — Ethlabs launched; Joe Lubin + Bitmine + SharpLink backing institutional ETH adoption
+
+SOL narrative (posture: NEUTRAL)
+  [T1] https://defillama.com/chain/solana — TVL $4.78B, App Revenue $2.82M/24h, Stablecoins +3% 7d
+
+AAVE narrative (posture: BULLISH)
+  [T1] https://www.theblock.co/post/405774/midas-mglobal-fasanara-aave-horizon — "Holders will now be able to deposit mGLOBAL on Aave Horizon... $1T+ cumulative loans"
+  [T1] https://defillama.com/protocol/aave — Funding rounds and institutional backing confirmed
+
+HYPE narrative (posture: NEUTRAL)
+  [T1] https://defillama.com/chain/hyperliquid-l1 — Perps Volume $9.78B/24h, App Revenue $2.05M/24h, TVL $1.43B
+
+LINK narrative (posture: BULLISH)
+  [T1] https://defillama.com/protocol/chainlink — "tens of trillions in transaction value... Swift, Euroclear, UBS, JPMorgan"
+  [T2] https://www.theblock.co/post/405578/tokenized-rwa-market-cap-rises-51-billion-industry-races-define-equity-tokenization-model-bernstein — RWA market cap +40% to $51B
+
+UNI narrative (posture: BULLISH)
+  [T2] https://defillama.com/protocol/uniswap — "BlackRock" investment Feb 2026 confirmed
+  [T2] https://www.theblock.co/news/defi — UNIfication fee switch active, burns confirmed
+
+JUP narrative (posture: BULLISH)
+  [T1] https://defillama.com/chain/solana — Solana ecosystem metrics, Jupiter primary revenue driver
+
+TON narrative (posture: NEUTRAL)
+  [INSUFFICIENT DATA — no specific TON article fetched this run]
+
+AERO narrative (posture: NEUTRAL)
+  [INSUFFICIENT DATA — TradingView chart failed; DeFiLlama returned JS-only page]
+
+PUMP narrative (posture: BEARISH)
+  [INSUFFICIENT DATA — reflexive signal token; no specific catalyst]
+```
+
+---
+
+## Telegram Daily Recap
+
+```
+📊 Daily Crypto Brief — 2026-06-23
+
+🌡️ Mood: 17 — Extreme Fear
+
+📉 Macro: Chip/AI selloff deepens — Nasdaq -3.3%, S&P -1.4%. Bitcoin ETFs saw record $6B+ 30-day outflows as institutional money de-risks. FOMC next catalyst.
+[source: https://www.coindesk.com/markets/2026/06/24/bitcoin-drops-toward-usd62-000-as-the-chip-selloff-deepens-for-a-second-day]
 
 ─────────────────────────────
 💼 PORTFOLIO SIGNALS
 
-🟠 BTC $62,486 | RSI 25 | -46% ATH
-▶️ BUY (small) • death cross active • MSTR $9.4B underwater
-📌 1st tranche here. Ladders: $55k / $50k / $45k.
+🌟 AAVE $71.86 | RSI 46 | −77% ATH
+🟢 BUY ★ • Institutional RWA launch (Fasanara $6B on Aave Horizon) [source: https://www.theblock.co/post/405774/midas-mglobal-fasanara-aave-horizon]
+📌 47.5% below 200w MA. Strongest MACD turn in portfolio.
 
-🔵 ETH $1,660 | RSI 24 | -61% ATH
-⏸ HOLD • EF cut 20% staff today (54 people, 5-cluster reorg)
-📌 Wait for EF clarity + ETH/BTC stabilization.
+₿ BTC $62,797 | RSI 38 | −50% ATH
+🟡 BUY (small) • At 200w MA ($62.5k) — historical floor. ETF outflows persist.
+📌 First tranche here; ladder $55k→$50k→$45k.
 
-🟣 SOL $68.93 | RSI 32 | -67% ATH
-▶️ BUY (small) • at 52-week low zone ($60)
-📌 1st tranche. Stop loss: weekly close <$60.
+⟠ ETH $1,673 | RSI 38 | −63% ATH
+🟡 BUY (small) • 32% below 200w MA. EF cuts 20% staff; Ethlabs launched [source: https://www.theblock.co/post/405694/bitmine-sharplink-and-joe-lubin-back-ethlabs-nonprofit-to-advance-ethereums-next-phase-of-growth]
+📌 Small toe-hold; upgrade on weekly close above $2,472.
 
-🦄 UNI $2.90 | RSI 49 | -68% ATH
-⏸ HOLD • not oversold • fee switch still pending
-📌 Wait for governance vote.
+◎ SOL $69.94 | RSI 44 | −67% ATH
+🟡 BUY (small) • Solana stablecoins +3% 7d [source: https://defillama.com/chain/solana]
+📌 Small tranche; add on EMA20 ($71.62) reclaim.
 
-⚡ HYPE $62.90 | RSI 49 | -16% ATH
-⏸ HOLD • GOLDEN CROSS ✅ only name trending up
-💪 Perps vol $9.23B/24h, revenue $2.11M/24h — fundamentals strong
-📌 Wait for $52-58 dip or risk-off to clear.
+🪐 JUP $0.210 | RSI 60 | −60% ATH
+🟡 BUY (small) • Golden cross. Price above ALL MAs. Recovering momentum.
+📌 Not oversold — momentum entry, not value buy.
 
-🔮 AAVE $71.84 | RSI 44 | -73% ATH
-▶️ BUY (small) ⭐ highest conviction
-🔥 Catalyst: mGLOBAL institutional product live on Aave Horizon today
-📌 Leading DeFi protocol + RWA tailwind + improving MACD.
+🦄 UNI $2.911 | RSI 49 | −71% ATH
+🟡 BUY (small) • Fee switch live + BlackRock invested [source: https://defillama.com/protocol/uniswap]
+📌 57.6% below 200w MA. Add on SMA200 ($3.97) reclaim.
 
-🔗 LINK $7.60 | RSI 23 | -60% ATH
-▶️ BUY (small) • most oversold in universe
-🏛️ Oracle for Swift, Euroclear, UBS, JPMorgan — durability high
-📌 Start position. Watch EMA20 ($8.08) reclaim.
+🔗 LINK $7.647 | RSI 37 | −70% ATH
+🟡 BUY (small) • RWA market +40% to $51B [source: https://www.theblock.co/post/405578/tokenized-rwa-market-cap-rises-51-billion-industry-races-define-equity-tokenization-model-bernstein]
+📌 Oracle backbone undervalued vs RWA narrative.
+
+🔵 TON $1.556 | HOLD • At 200d MA. Durov legal risk.
+💙 HYPE $62.16 | HOLD • ATH pullback. Add on $64.57 reclaim.
+🟣 AERO $0.527 | HOLD • Golden cross. No oversold entry.
+🎲 PUMP $0.0014 | HOLD • Cycle signal. Not a buy.
 
 ─────────────────────────────
-⚠️ Trend is bearish on 6/7 names. These are accumulation tranches, not full positions. Keep 60-70% dry powder.
+⚠️ Trend is broadly bearish (death crosses on BTC/ETH/SOL/AAVE/LINK/UNI). Keep 60–70% dry powder. Stage entries — do NOT go all-in.
 
-📅 Watch: Micron earnings Wed • Jobs Jul 2 • CPI Jul 14
+📅 Watch: FOMC June 16–17 (passed) → next catalyst is July FOMC. $10.6B options expiry Friday on Deribit.
+
+📎 Sources used in this recap:
+• https://api.alternative.me/fng/?limit=1 — F&G index, value 17
+• https://www.coindesk.com/markets/2026/06/24/bitcoin-drops-toward-usd62-000-as-the-chip-selloff-deepens-for-a-second-day — BTC ETF outflows + chip selloff
+• https://www.theblock.co/post/405774/midas-mglobal-fasanara-aave-horizon — AAVE Horizon institutional launch
+• https://www.theblock.co/post/405885/cryptoquant-strategy-should-pause-bitcoin-purchases-rebuild-cash-reserves — Strategy BTC pause
+• https://www.theblock.co/post/405694/bitmine-sharplink-and-joe-lubin-back-ethlabs-nonprofit-to-advance-ethereums-next-phase-of-growth — Ethlabs launch
+• https://defillama.com/chain/ethereum — ETH chain metrics
+• https://defillama.com/chain/solana — SOL chain metrics
+• https://defillama.com/chain/hyperliquid-l1 — HYPE chain metrics
+• https://defillama.com/protocol/chainlink — LINK institutional reach
+• https://www.theblock.co/post/405578/tokenized-rwa-market-cap-rises-51-billion-industry-races-define-equity-tokenization-model-bernstein — RWA $51B
+• https://defillama.com/protocol/uniswap — UNI BlackRock investment
 
 Educational only. Not financial advice. DYOR.
 ```
