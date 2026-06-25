@@ -14,7 +14,9 @@ license: MIT
 compatibility: >
   Needs network access to DefiLlama (yields.llama.fi) and Morpho (api.morpho.org), an agent runtime
   that can spawn subagents (Claude Code / OpenCode Task/Agent tool), and WebSearch for incident news.
-  Reading a live book needs the `gws` Google Workspace CLI authenticated for the investor's account.
+  Reading a live book needs either the `chrome-use` skill (for an on-chain `0x…` wallet, via the
+  DeBank web UI — no API key) or the `gws` Google Workspace CLI authenticated for the investor's
+  account (for a manual Google-Sheet book).
 metadata:
   author: engineer
   version: "2.4"
@@ -104,7 +106,9 @@ wrapped assets with custody or bridge risk, and **anything whose yield source yo
 
 ## Data (read-only inputs)
 
-- **Holdings — Google Sheet via `gws`:** `gws sheets +read --spreadsheet "$CRYPTO_SHEET_ID" --range "$CRYPTO_SHEET_RANGE" --format csv`. Interpret any layout yourself.
+- **Holdings — pick the source by what the investor gives you:**
+  - **On-chain wallet (a `0x…` address / ENS):** read it from the **DeBank web UI via the `chrome-use` skill — NEVER the DeBank API (`api.debank.com` / `pro-openapi.debank.com`).** The web UI needs no API key and shows full multi-chain DeFi/LP positions. Delegate to a `chrome-use` subagent: connect to the existing Chrome session, open `https://debank.com/profile/<address>`, wait for the portfolio to load, then read per-protocol DeFi positions (LP legs, supplied/borrowed, rewards), idle token balances, and the per-chain/total USD. Capture each LP/position's protocol, chain, pool/pair, USD value, and any APY shown. If a position is an LP, note both legs and whether it's in-range (concentrated-liquidity) — out-of-range LPs earn no fees and are a prime inefficiency. The `api.debank.com` HTTP endpoint is rate-limited/keyed and **must not** be used.
+  - **Off-chain / manual book (a Google Sheet):** `gws sheets +read --spreadsheet "$CRYPTO_SHEET_ID" --range "$CRYPTO_SHEET_RANGE" --format csv`. Interpret any layout yourself.
 - **Live APY + collateral:** DefiLlama `curl -s https://yields.llama.fi/pools` (+ `/chart/{poolId}` for 30-day history); Morpho `https://api.morpho.org/graphql` for vault collateral (chainId 1=Ethereum, 8453=Base).
 - **Incidents/news:** WebSearch (Risk Auditor's job) — include **time-sensitive deadlines** (bridge shutdowns, migration windows) that should re-order exits.
 - **Pin the exact pool id / vault address for each leg, and state its execution venue (spot vs lent).** Beware **name-collision** venues — e.g. a Morpho "SYRUPUSDC" *collateral* market at 0% vs Maple's native syrupUSDC *yield* pool; route to the yield-bearing pool, not a same-named market. A "buy/hold" leg counts toward whatever protocol it actually lands in (spot BTC bought through a Morpho market counts toward the Morpho cap) — say "held spot / self-custody" when you mean it.

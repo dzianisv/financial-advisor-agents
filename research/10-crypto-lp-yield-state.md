@@ -3,7 +3,116 @@
 *Where to earn yield on stablecoins right now **without shady collateral**. Educational
 analysis, not advice. All numbers pulled live from the DefiLlama free yields API
 (`https://yields.llama.fi/pools`) and the Morpho GraphQL API (`https://api.morpho.org/graphql`)
-on **2026-05-30**. Re-run the queries at the bottom to refresh — DeFi rates move hourly.*
+on **2026-05-30**. Updated **2026-06-24** with Fluid vs Maple deep research. Re-run the
+queries at the bottom to refresh — DeFi rates move hourly.*
+
+---
+
+## 2026-06-24 Update — Fluid vs Maple Deep Research
+
+*Full deep-dive comparison run June 24, 2026. Sources: 30+ URLs, 3 parallel research agents.*
+
+### Verified APYs (30-day cross-check applied)
+
+| Venue | Today | 30d Mean | Sigma | Verdict |
+|---|---|---|---|---|
+| Maple syrupUSDC (ETH) | 5.00% | 4.75% | 0.09 | ✅ Stable — confirmed |
+| Maple syrupUSDT (ETH) | 4.00% | ~4.0% | ~0.09 | ✅ Stable — confirmed |
+| Fluid USDC lending (ETH) | 7.60% | 7.05% | 0.17 | ✅ Stable ~7% |
+| Fluid USDT lending (ETH) | 7.34% ⚠️ | **4.73%** | 0.19 | ⚠️ SPIKE — real avg ~4.7% |
+| Aave v3 USDC Umbrella (ETH) | 6.91% | 7.32% | ~0.15 | ✅ Stable ~7%, safety-module stake |
+| Morpho Reservoir USDC (ETH) | 6.08% | 6.21% | 0.07 | ✅ Most stable of all |
+| Aerodrome CL1 USDC-USDT (Base) | 20.6% | 24.5% | 0.55 | ⚠️ Real but wildly volatile; active mgmt |
+
+> ⚠️ **Rule (from defi-portfolio-manager skill):** Always cross-check today's APY against 30d
+> mean before sizing. A spike today (Fluid USDT: 7.34% vs 4.73% mean) = utilization event,
+> not a new normal. DeFiLlama `/chart/{poolId}` gives 30d history.
+
+---
+
+### Fluid Protocol — Key Facts
+
+| Item | Detail |
+|---|---|
+| **What it is** | Permissionless DeFi lending protocol by Instadapp |
+| **Founded** | Instadapp 2018 (middleware); Fluid protocol launched Jan 2024 |
+| **Legal entity** | None disclosed — operates as DAO (`instadapp-gov.eth`) |
+| **Jurisdiction** | Unknown; no corporate registration found |
+| **TVL (Jun 2026)** | $698M supply-side; peak ~$1.47B (Oct–Nov 2025) |
+| **Chains** | Ethereum ($487M), Arbitrum ($105M), Plasma ($87M), Base ($18M) |
+| **Backers** | Coinbase Ventures, Pantera Capital, Binance (medium confidence) |
+| **FLUID token** | ~$0.93; 100M max supply; −96% from ATH $24.40; ~$72M market cap |
+| **US access** | ✅ Open to everyone, no KYC |
+| **Known exploits** | None found |
+| **Audits** | Formal audits pre-launch (Nov–Dec 2023); $500k live bug bounty deployed before mainnet |
+| **Withdrawals** | Instant (ERC-4626 redeem anytime) |
+
+**How it works:** Shared Liquidity Layer aggregates all deposits → borrowers post ETH/wBTC/wstETH
+collateral on-chain → borrow against it → you earn their interest rate. Key innovations: Automated
+debt ceilings (limit exploit blast radius), slot-based liquidations (like swaps, ~150k gas vs
+300k–1M), Smart Debt (borrowers' debt earns DEX swap fees), up to 95% LTV on ETH.
+
+**USDT yield breakdown:**
+- `apyBase` = borrower interest (variable, utilization-curve driven)
+- `apyReward` = 1.03% INST/FLUID token emissions (must claim + sell to realize)
+- 30d realistic expectation: **~4.5–5.5%** (today's spike reverts)
+
+---
+
+### Maple Finance — Updated Facts (Jun 2026)
+
+| Item | Detail |
+|---|---|
+| **AUM** | $3.99B; $22.46B total originated since founding |
+| **Operating company** | Maple Labs Pty Ltd — **Melbourne, Australia** |
+| **Issuer (syrupUSDC/USDT)** | Maple International Operations SPC — **Cayman Islands** (segregated portfolios) |
+| **Interface operator** | Syrup Ltd; governing law **British Virgin Islands** |
+| **US access** | 🚫 Blocked (also Australia, Russia, Belarus, etc.) |
+| **Backing** | BlockTower, Framework, Polychain, Circle, GSR, Spartan Group |
+| **Early investor** | Alameda Research ⚠️ (seed 2020, collapsed Nov 2022) |
+| **Audits** | 9 rounds: Trail of Bits, Spearbit, Three Sigma, 0xMacro, Sherlock, Dedaub, Sigma Prime |
+| **Known exploits** | None (smart contract). Credit default history: see below |
+| **Withdrawals** | FIFO queue, typically <24h; worst case 30 days. OR: sell syrupUSDC on Uniswap instantly (slippage applies) |
+
+**2022 Orthogonal Trading default (the critical history):**
+- Dec 2022: Orthogonal Trading (pool delegate) defaulted on ~$36M in Maple V1 loans
+- Root cause: Maple V1 allowed undercollateralized loans; Orthogonal misrepresented FTX exposure
+- **No insurance fund.** Losses borne entirely by LPs in those pools, pro-rata
+- LPs who withdrew during impairment locked in permanent losses; no future recovery
+- **Response:** V2 launched Dec 11, 2022 — requires overcollateralization on ALL loans
+- syrupUSDC/syrupUSDT use V2 model with Cayman SPC legal isolation
+
+**Withdrawal mechanics (verified from docs):**
+- Official path: FIFO withdrawal queue — "average <24h" on US banking days; as fast as ~3h intraday
+- Emergency/instant path: swap syrupUSDC on Uniswap — immediate, but syrupUSDC ≠ 1:1 USDC (NAV-based, slippage applies)
+- Worst case: up to 30 days if pool is heavily deployed and withdrawal demand is high
+
+---
+
+### Fluid vs Maple — Head-to-Head
+
+| Dimension | Maple syrupUSDC | Fluid USDT |
+|---|---|---|
+| Expected APY | ~4.75–5.0% (stable) | ~4.5–5.5% (variable) |
+| APY source | Institutional credit + basis trades | On-chain borrower interest + INST rewards |
+| APY stability | ✅ Very stable (sigma 0.09) | ⚠️ More volatile (sigma 0.19) |
+| Withdrawal | Queue <24h typical; Uniswap instant exit | ✅ Instant (ERC-4626) |
+| US access | 🚫 Blocked | ✅ Open |
+| KYC | Self-cert (non-US) | None |
+| Legal structure | Cayman SPC, BVI law, Australian company | DAO, no disclosed entity |
+| Legal recourse if loss | Some (Cayman court, MLA contracts) | Effectively none |
+| Default history | ❗ $36M (2022, V1 undercollateralized) | None (2.5 years old) |
+| Smart contract exploits | None | None |
+| Audits | 9 rounds, 6 named firms | Pre-launch audits; fewer details available |
+| Token emissions in yield | None (clean yield) | ⚠️ 1.03% INST must be claimed + sold |
+| CEX exposure | ⚠️ Basis trades on CEXes | None — fully on-chain |
+| Borrower type | KYC'd institutional firms (MLAs) | Permissionless on-chain wallets |
+
+**Choose Maple if:** non-US, want stable yield, comfortable with queue withdrawal, prefer regulated entity structure.
+
+**Choose Fluid if:** US-based, want instant withdrawal, comfortable with variable rate, prefer fully on-chain.
+
+---
 
 ## TL;DR
 
