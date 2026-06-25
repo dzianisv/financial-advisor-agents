@@ -1,5 +1,5 @@
 ---
-name: crypto-portfolio-manager
+name: crypto-advisor
 description: "Manages the crypto portfolio — runs analysis on every token in the universe (BTC/ETH/SOL/TON/HYPE/AAVE/JUP/UNI/AERO/PUMP/LINK) and outputs a BUY/SELL/HOLD decision per token. Run on demand or via /loop. Educational, not advice."
 license: MIT
 compatibility: opencode
@@ -9,7 +9,7 @@ metadata:
   role: portfolio-manager
 ---
 
-# Crypto Portfolio Manager
+# Crypto Advisor
 
 Analyze every token in the universe **sequentially** → decide BUY/SELL/HOLD per token → print the signal table.
 
@@ -19,21 +19,21 @@ Analyze every token in the universe **sequentially** → decide BUY/SELL/HOLD pe
 
 ### Default daily run
 ```
-Run the crypto portfolio manager
+Run the crypto advisor
 ```
 The skill analyzes the default token universe, pulls live TradingView data, runs a 5-seat quorum per token, and prints the full 3-block report (signal table + plain-English verdicts + ranked news sources). **Attach a TradingView screenshot for each token.**
 
 ### Custom token set
 ```
-Run the crypto portfolio manager on: TON, JUP, HYPE
+Run the crypto advisor on: TON, JUP, HYPE
 ```
 
 ### Full prompt (copy-paste for any session)
 ```
-Invoke the crypto-portfolio-manager skill. Token universe for this run: [TOKEN1, TOKEN2, ...].
+Invoke the crypto-advisor skill. Token universe for this run: [TOKEN1, TOKEN2, ...].
 Follow all skill instructions:
 - chart_get_state → dedup indicators → set_symbol → D OHLCV (365 summary + 210 bars) → study values → W OHLCV → capture_screenshot
-- Compute MAs via .agents/skills/crypto-portfolio-manager/scripts/indicators.py
+- Compute MAs via .agents/skills/crypto-advisor/scripts/indicators.py
 - Run 5-seat quorum inline (on-chain, sentiment, macro, order-flow, narrative)
 - Narrative seat: web-fetch ≥3 sources, rank T1/T2/T3, quote exact sentences
 - Print 3-block report: signal table | plain-English verdicts | news sources
@@ -139,7 +139,7 @@ tradingview-capture_screenshot                             → save screenshot; 
 
 **1b. Read the indicators from TradingView; compute only the moving averages.** From `data_get_study_values` take RSI(14), Bollinger(20,2), MACD line/signal/hist, Volume — verbatim, no recompute. From the daily `summary=true` pull take 52w high/low + avg volume. Then fill the MA gap (computed MAs match TradingView's own values):
 ```bash
-/Users/engineer/.venv/bin/python3 .agents/skills/crypto-portfolio-manager/scripts/indicators.py /tmp/{TOKEN}.json
+/Users/engineer/.venv/bin/python3 .agents/skills/crypto-advisor/scripts/indicators.py /tmp/{TOKEN}.json
 ```
 Helper input: `{"symbol","price","daily_closes":[...],"weekly_closes":[...]}`. Helper output: EMA20, SMA50, SMA200, 200-week MA, and the death cross (classic SMA50/SMA200, exact). Nothing else — it does not recompute RSI/BB/MACD.
 

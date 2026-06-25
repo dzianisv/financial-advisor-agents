@@ -93,6 +93,27 @@ Append to `.agents/memory/YYYY-MM-DD.md` before replying. Format:
 
 Then `git add ... && git commit && git push` — DoD gate requires no uncommitted/unpushed changes.
 
+## Memory model — two-tier, ranked (reuses OpenClaw memory-core)
+
+Two surfaces, mirroring OpenClaw's evergreen-vs-dated split (`temporal-decay.ts:71-95`):
+- **Canonical / evergreen** — `.agents/memory/positions.md`: one line per `<desk>:<TICKER>`,
+  **overwritten on every new verdict** so the latest stance physically replaces the old one (no stale
+  call can out-rank the current one). Never decays.
+- **Episodic / dated** — `.agents/memory/YYYY-MM-DD.md`: full notes, **decays by the date in the
+  filename** (newer outranks older on recall).
+
+**Recall** (before any portfolio/research run):
+```bash
+bun .agents/skills/portfolio-memory/recall.ts --desk stocks --tickers "AVGO MRVL COIN"
+```
+Tries `openclaw memory search` (hybrid BM25+vector+temporal-decay+MMR) when the CLI is built and
+`memorySearch.extraPaths` includes `.agents/memory`; else greps (canonical always shown + dated
+newest-first). Inject the printed `<prior_context>` block into the run.
+
+**Write** (per verdict): `bun .agents/skills/portfolio-memory/remember.ts --desk stocks --ticker COIN
+--verdict TRIM --date <date> --conviction 2 --body "..."` — upserts the canonical line + appends the
+dated log. The CIO prose summary above is still appended for narrative history.
+
 ## Skills
 
 All in `.agents/skills/`. Full architecture diagrams: `.agents/skills/README.md`.

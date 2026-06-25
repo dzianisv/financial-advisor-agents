@@ -1,5 +1,5 @@
 export const meta = {
-  name: 'crypto-portfolio-manager',
+  name: 'crypto-advisor',
   description: 'Sequential per-token crypto analysis: TradingView MCP data pull (orchestrator only) → 5-seat quorum → narrative with real web-fetched sources → citation validation post-hook (code-enforced ERR_RX, same pattern as hedge-fund-committee). Outputs BUY/SELL/HOLD signal table + plain-English verdicts + validated news sources.',
   phases: [
     { title: 'Analyze',  detail: 'Sequential per-token: TV data pull (orchestrator) → indicators.py → 5-seat quorum → narrative with real web fetches. Returns structured JSON per token.' },
@@ -64,8 +64,8 @@ const TOKEN_SCHEMA = {
 phase('Analyze')
 
 const TOKEN_PROMPT = (symbol) =>
-  `You are analyzing ${symbol} for the crypto portfolio manager. Follow the skill at ` +
-  `${SKILL}/crypto-portfolio-manager/SKILL.md Steps 1a–1e exactly.\n\n` +
+  `You are analyzing ${symbol} for crypto advisor. Follow the skill at ` +
+  `${SKILL}/crypto-advisor/SKILL.md Steps 1a–1e exactly.\n\n` +
 
   `HARD CONSTRAINTS (non-negotiable):\n` +
   `1. tradingview-* MCP tools are available to you — use them for all price/indicator data.\n` +
@@ -195,7 +195,7 @@ if (errRows.length) {
     `Append a citation-error log entry, then return only "ERRLOG OK".\n` +
     `1. \`mkdir -p logs\`. 2. Get UTC timestamp: \`date -u +%FT%TZ\`.\n` +
     `3. APPEND (never overwrite) to \`logs/citation-errors.log\`:\n` +
-    `Header: \`=== <timestamp> crypto-portfolio-manager run ===\`\n` +
+    `Header: \`=== <timestamp> crypto-advisor run ===\`\n` +
     `Then one tab-separated line per row: \`<timestamp>\\t<symbol>\\t<type>\\t<detail>\`\n` +
     `Rows: ${JSON.stringify(errRows)}`,
     { label: 'citation-errlog', phase: 'Validate', model: MODEL }

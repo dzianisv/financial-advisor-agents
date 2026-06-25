@@ -1,10 +1,10 @@
 ---
 name: crypto-daily
 description: >
-  Daily crypto publishing workflow. Finds today's completed crypto-portfolio-manager analysis,
+  Daily crypto publishing workflow. Finds today's completed crypto-advisor analysis,
   then publishes three outputs: (1) Notion page with full report, (2) Telegram post to the
   @CryptoAiInvestor channel, (3) short tweet on X.com. If today's analysis is missing or stale
-  (>12h), re-runs crypto-portfolio-manager first. Triggers on: "/crypto-daily", "post crypto
+  (>12h), re-runs crypto-advisor first. Triggers on: "/crypto-daily", "post crypto
   daily", "publish today's crypto report", "send telegram crypto update", "tweet crypto signals".
 compatibility: opencode
 ---
@@ -53,7 +53,7 @@ else
 fi
 ```
 
-**0c. If NOT fresh:** invoke `crypto-portfolio-manager` first (full run, all 7 tokens), then return here.  
+**0c. If NOT fresh:** invoke `crypto-advisor` first (full run, all 7 tokens), then return here.
 **If fresh:** continue to Step 1 with the existing `$REPORT` file.
 
 ---
@@ -70,7 +70,7 @@ Pull the three payload sections from the report:
 2. **Telegram recap** — the block starting with `📊 Daily Crypto Brief`
 3. **Key facts for tweet** — top signal + top catalyst from Block 2
 
-If the Telegram recap section is missing from the report, construct it per the `crypto-portfolio-manager` Step 6 format using the signal table and Block 2 verdicts already in the report.
+If the Telegram recap section is missing from the report, construct it per the `crypto-advisor` Step 6 format using the signal table and Block 2 verdicts already in the report.
 
 ---
 
