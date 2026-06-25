@@ -60,7 +60,7 @@ Follow all skill instructions:
 - Run scripts/fundamentals.py per ticker; inject its JSON into the data package
 - Spawn the 4 seats in PARALLEL subagents (fundamental / technical / narrative / sentiment),
   data package injected — subagents NEVER call TradingView or yfinance
-- Narrative seat: web_fetch ≥3 sources (WSJ/FT/Bloomberg/Reuters), quote verbatim, classify theme phase
+- Narrative seat: pull WSJ/FT via the feed scripts (`fetch_wsj.ts`/`fetch_ft.ts`) + web_fetch Bloomberg/Reuters, quote verbatim, classify theme phase
 - Apply the verdict decision table → BUY / WATCH / SKIP with entry zone + trigger + stop
 - Print per-stock blocks + the final signal table with the theme map
 Educational, not financial advice.
@@ -115,17 +115,24 @@ Market narratives rotate; what leads flows this quarter may fade next. **Do not 
 When the user asks to "find stocks in theme X" or "what should I look at this week", discover the live
 themes and their constituents by fetching, then reading, real pages:
 
-1. **Identify the live themes.** `web_fetch` 2–3 of these and read what is actually leading flows:
-   - `https://www.wsj.com/market-data` and `https://www.wsj.com/news/markets`
-   - `https://www.ft.com/markets`
+1. **Identify the live themes.** Pull WSJ + FT first via the **paywall-free feed scripts** (the
+   `wsj.com`/`ft.com` listing pages below are bot-blocked from agent IPs — the feed scripts return real
+   article URLs + a verbatim publisher teaser + date, no login needed):
+   ```bash
+   bun .agents/skills/feed-wsj/scripts/fetch_wsj.ts --feed markets,business --days 5 --limit 25 --text
+   bun .agents/skills/feed-ft/scripts/fetch_ft.ts  --section markets,companies,global-economy --days 5 --limit 25 --text
+   ```
+   Then `web_fetch` 1–2 of the **non-paywalled** listings for breadth:
    - `https://www.bloomberg.com/markets`
    - `https://finance.yahoo.com/topic/latest-news/` (sector/thematic trend listings)
 2. **Map names to themes.** For each candidate ticker, tag it with one theme bucket:
    `AI_SUPPLY_CHAIN | ROBOTICS | ENERGY | DEFENSE | FINTECH | HEALTHCARE | OTHER`. The buckets are a
    classification convention, not a fixed universe — add a bucket if the evidence supports a new one.
 3. **Anti-hallucination rule (same as the narrative seat):** you may only name a theme or a constituent
-   you found in a page you actually `web_fetch`ed this run. No fetched URL = not a theme. Never list a
-   "current narrative" from memory — narratives are exactly the thing that goes stale.
+   you found this run in a page you actually `web_fetch`ed **or in feed-script output you actually ran**
+   (`fetch_wsj.ts`/`fetch_ft.ts` print real URLs + verbatim teasers — those count as fetched). No fetched
+   URL / no feed record = not a theme. Never list a "current narrative" from memory — narratives are
+   exactly the thing that goes stale.
 
 If the user supplies an explicit ticker list, skip discovery and analyze that list (still tag each name
 with a theme in the output).
@@ -246,7 +253,8 @@ reads ONE lens and returns the fixed shape below. Seats share nothing, so they r
 ## The 4-seat panel (subagent prompts — reuse verbatim, fill the blanks)
 
 > The data package is injected into every seat. Subagents are a **context firewall**: they reason over the
-> package only and never pull MCP/yfinance data. Only the narrative seat may `web_fetch`.
+> package only and never pull MCP/yfinance data. Only the narrative seat may reach external news — via
+> `web_fetch` **and** the paywall-free feed scripts (`fetch_wsj.ts`/`fetch_ft.ts`, run with `bun`).
 
 ### Seat 1 — Fundamental (grounded in `fundamental-analysis`)
 ```
@@ -305,11 +313,20 @@ the theme sits in its cycle. You MUST web_fetch before citing any news.
 DATA PACKAGE:
   <inject the package + the theme tag assigned in discovery>
 
-⛔ HARD RULE: call web_fetch on a real URL before citing it. No fetched URL = not a source. A fabricated
-headline invalidates the whole verdict. Fetch ≥3 of: WSJ (https://www.wsj.com/news/markets),
-FT (https://www.ft.com/markets), Bloomberg (https://www.bloomberg.com/markets),
-Reuters (https://www.reuters.com/markets/), Yahoo Finance topic pages. Two-step: fetch a listing page,
-then fetch the specific ARTICLE url and quote from its body. Quote verbatim — never paraphrase from memory.
+⛔ HARD RULE: call web_fetch on a real URL before citing it, OR cite a record returned by the feed
+scripts (which print real URLs + verbatim publisher teasers). No fetched URL / no feed record = not a
+source. A fabricated headline invalidates the whole verdict.
+
+GET WSJ + FT FIRST via the paywall-free feed scripts (https://www.wsj.com/news/markets and
+https://www.ft.com/markets are bot-blocked from agent IPs — do NOT rely on web_fetching them):
+  bun .agents/skills/feed-wsj/scripts/fetch_wsj.ts --feed markets,business --query "<theme/ticker>" --days 7 --text
+  bun .agents/skills/feed-ft/scripts/fetch_ft.ts  --section markets,companies --query "<theme/ticker>" --days 7 --text
+Each record is a real wsj.com/ft.com URL + a 1-sentence publisher teaser + date. The teaser is itself a
+verbatim publisher quote — cite it as [T1]/[T2] url (date) — "<teaser>" WITHOUT needing the paywalled body.
+To deepen a quote, optionally web_fetch the article URL the script returned (works when logged in; if it
+paywalls, the teaser still stands as the citation). Then fetch ≥1 of the non-paywalled outlets for breadth:
+Bloomberg (https://www.bloomberg.com/markets), Reuters (https://www.reuters.com/markets/), Yahoo Finance
+topic pages. Quote verbatim — never paraphrase from memory.
 
 Classify the theme phase:
   EARLY_CYCLE  — theme just forming, few names, skeptics dominate, flows starting
@@ -321,8 +338,8 @@ Return ONLY this shape:
   PHASE: EARLY_CYCLE | MID_CYCLE | LATE_CYCLE | FADING
   THEME: <the durable theme this rides, or "no durable theme — idiosyncratic/noise">
   SOURCES (ranked, ≥2 real):
-    [T1] https://<article-url-you-fetched> — "<verbatim quote>" → T1 because: <one line>
-    [T2] https://<article-url-you-fetched> — "<verbatim quote>" → T2 because: <one line>
+    [T1] https://<article-url — web_fetched, or a wsj.com/ft.com URL from the feed scripts> — "<verbatim quote or publisher teaser>" → T1 because: <one line>
+    [T2] https://<article-url — web_fetched, or a wsj.com/ft.com URL from the feed scripts> — "<verbatim quote or publisher teaser>" → T2 because: <one line>
   WHY: <one line — is the theme durable and is this name a real beneficiary?>
   BLIND SPOT: <one line — news is lagging/reflexive; what this lens misreads>
 If <2 real fetched sources: PHASE defaults to the technical read; write "INSUFFICIENT DATA — do not guess".
@@ -481,8 +498,8 @@ $280 trigger rule must clear strategy-discovery-backtest before risking capital.
 - [ ] Each stock block ends with a concrete **entry zone + bar-close trigger + market-based stop** — never
       a vague "looks good". WATCH/SKIP names what would change it.
 - [ ] The technical seat **named a setup or said there is none**; no BUY without a live trigger.
-- [ ] The narrative seat **actually web_fetched** ≥2 real article URLs; every news claim carries an inline
-      `[source: https://...]`; no URL = the claim was removed.
+- [ ] The narrative seat cited ≥2 real article URLs it **actually web_fetched or got from the feed scripts**
+      (`fetch_wsj.ts`/`fetch_ft.ts`); every news claim carries an inline `[source: https://...]`; no URL = the claim was removed.
 - [ ] Themes and constituents were **discovered live this run** (or the user supplied the list) — none
       asserted from memory.
 - [ ] The honest base-rate note is present: single names are satellites, index is the bar; passing panels

@@ -1,6 +1,6 @@
 ---
 name: feed-wsj
-description: Source adapter for The Wall Street Journal (WSJ) Markets — PAYWALLED, RSS descriptions/teasers available as summary. Fetch + normalize the WSJ Markets RSS into the common article record (headline + url + published_at + publisher's RSS teaser). Use when gathering the crypto/macro news feed, when narrative-news needs WSJ markets coverage, or when asked for "WSJ headlines" / "Wall Street Journal markets news". Fetch + normalize ONLY — no dedup/store/judge. NEVER fabricates a body.
+description: Source adapter for The Wall Street Journal (WSJ) — PAYWALLED, RSS descriptions/teasers available as summary. Fetch + normalize the WSJ Dow Jones RSS into the common article record (headline + url + published_at + publisher's RSS teaser). When an agent needs WSJ news on demand, run `scripts/fetch_wsj.ts` to print live WSJ headlines + real URLs + teasers to stdout (no DB, no deps). Use when gathering the crypto/macro news feed, when narrative-news needs WSJ markets coverage, or when asked for "WSJ headlines" / "Wall Street Journal markets news". Fetch + normalize ONLY — no dedup/store/judge. NEVER fabricates a body.
 license: MIT
 compatibility: opencode
 metadata:
@@ -16,6 +16,38 @@ Pure **fetch + normalize** adapter for a **paywalled** outlet. WSJ bodies are be
 adapter emits **headline + url + published_at + RSS teaser** (the publisher's own `description`) and marks
 the body `[UNAVAILABLE - paywall]` only when the RSS teaser is absent. Dedup/store/judge live downstream in
 [[crypto-news-store]] + [[narrative-news]].
+
+## On-demand fetch (agent) — START HERE
+
+When you (an agent) need WSJ news **right now**, run the self-contained fetcher. It pulls WSJ's Dow Jones
+public RSS, normalizes + dedups, and prints to **stdout** — no database, no npm deps (Bun built-ins):
+
+```bash
+bun /Users/engineer/workspace/backtest/.agents/skills/feed-wsj/scripts/fetch_wsj.ts [flags]
+```
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--feed a,b,c` | `markets,world,business,tech` | WSJ feeds; names map to DJ codes (also accepts raw `RSSMarketsMain`, …). Extra: `opinion`, `lifestyle` |
+| `--query "terms"` | — | Case-insensitive filter over title+teaser; multiple words = AND |
+| `--days N` | `7` | Keep only items published within N days |
+| `--limit N` | `50` | Cap the number of records |
+| `--text` | off | Human-readable lines instead of JSON |
+
+```bash
+# Latest markets + business headlines as JSON
+bun .../scripts/fetch_wsj.ts --feed markets,business --limit 20
+
+# What is the WSJ saying about the Fed this week, human-readable?
+bun .../scripts/fetch_wsj.ts --query "Fed rates" --days 7 --text
+```
+
+**Output:** JSON array of `{source,url,title,published_at,summary,tags}` (newest first). Each `summary` is
+WSJ's own teaser, or `"[UNAVAILABLE - paywall]"` if WSJ shipped none — **never a fabricated body**. If every
+feed fails the script prints a single `{"status":"[UNAVAILABLE]","reason":...}` record and exits non-zero.
+For full article text use the logged-in-Chrome / Wayback reader in **Reading the BODY** below.
+
+Tests (deterministic, no network): `bun test ./.agents/skills/feed-wsj/scripts/fetch_wsj.test.ts`.
 
 ## Hard rule (paywall)
 

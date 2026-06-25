@@ -167,7 +167,7 @@ For any non-L1 token (not BTC/ETH/SOL/TON), you MUST verify protocol mechanics v
 
 **Narrative seat — mandatory sourcing protocol.**
 
-**⛔ HARD RULE: You MUST call `web_fetch` on a real URL before you can cite it as a source. If you did not call `web_fetch(url)` on it, it is NOT a source — do not write it down. A fabricated headline with no URL is a hallucination and invalidates the entire narrative verdict.**
+**⛔ HARD RULE: You MUST call `web_fetch` on a real URL before you can cite it as a source — OR cite a record printed by the feed scripts (`fetch_wsj.ts`/`fetch_ft.ts`/`news_fetch.py`), which return real URLs + verbatim publisher teasers. If you neither `web_fetch`ed the URL nor got it from a feed script this run, it is NOT a source — do not write it down. A fabricated headline with no URL is a hallucination and invalidates the entire narrative verdict.**
 
 **Step-by-step (do this in order, do not skip):**
 
@@ -190,6 +190,19 @@ For any non-L1 token (not BTC/ETH/SOL/TON), you MUST verify protocol mechanics v
      - `https://www.coindesk.com/tech` → DeFi/protocol news
      - `https://www.theblock.co/latest` → broad crypto news
    - Step 2: from the listing page response, extract any article URL relevant to the token (e.g. `https://www.coindesk.com/markets/2026/06/21/bitcoin-holds-near-...`), then **fetch that article URL** and quote from its body. The article URL — not the listing page — is what you cite in Block 3.
+
+   **Macro context — FT/WSJ via paywall-free feed scripts (T2, for BTC/ETH & risk regime):**
+   Mainstream macro coverage (Fed, rates, liquidity, ETF flows, dollar) moves crypto but FT/WSJ are
+   paywalled/bot-blocked — do NOT web_fetch their listing pages. Instead run the feed scripts; each prints
+   real `wsj.com`/`ft.com` URLs + a verbatim 1-sentence publisher teaser + date (the teaser IS a citable
+   quote — use it as a T2 source without needing the paywalled body). NOTE: `--query` is AND-of-words, so
+   keep it to ONE topic word (e.g. `bitcoin`, `Fed`, `crypto`) or omit it and skim the top markets items:
+   ```bash
+   bun .agents/skills/feed-wsj/scripts/fetch_wsj.ts --feed markets --days 5 --limit 20 --text          # top markets/macro
+   bun .agents/skills/feed-ft/scripts/fetch_ft.ts  --section markets,global-economy --query bitcoin --days 5 --text
+   ```
+   For a broader consolidated crypto+macro event feed (deduped across all outlets), use [[narrative-news]]:
+   `python3 .agents/skills/crypto-news-store/news_fetch.py --db .db/news.db --days 5 --query "<token/theme>"`.
 
 2. **Read what actually came back.** If the fetch returns an error or no relevant content, write `[FETCH FAILED: <url>]` — do NOT count it toward the 3-source minimum, do NOT invent what it "would have said."
 
@@ -301,7 +314,8 @@ summary of what it said and why it was ranked T1/T2/T3.
 
 ```
 --- NEWS SOURCES ---
-(Only URLs you actually called web_fetch on appear here. No URL = no entry.
+(Only URLs you actually called web_fetch on — or that a feed script (fetch_wsj.ts/fetch_ft.ts/
+news_fetch.py) returned — appear here. No URL = no entry.
 Every entry MUST start with https:// — source name alone is NOT acceptable.)
 
 BTC narrative (posture: BEARISH)
@@ -335,7 +349,7 @@ Self-check before printing:
 - **Two-step verified**: news citations point to the article URL you fetched (step 2), not the listing page (step 1)
 - **Block 2 inline links**: every news-based claim in Block 2 has `[source: https://...]` — scan each verdict and confirm; remove any fact that has no source tag
 - A TradingView screenshot is embedded inline (via `view` tool on the `file_path`) for every token — not just captured, but visible
-- **No source may be cited that was not actually fetched this run** — verify: "did I call web_fetch on this exact URL?" If no, remove it
+- **No source may be cited that was not actually fetched this run** — verify: "did I call web_fetch on this exact URL, or did a feed script return it?" If neither, remove it
 
 ---
 
