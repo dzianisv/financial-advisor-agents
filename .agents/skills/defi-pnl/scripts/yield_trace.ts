@@ -137,7 +137,7 @@ export const CHAIN_CONFIG: Record<string, {
   },
   ethereum: {
     blockscout: "https://eth.blockscout.com/api",
-    rpcs: ["https://eth.llamarpc.com"],
+    rpcs: ["https://ethereum.publicnode.com", "https://1rpc.io/eth", "https://eth.llamarpc.com"],
     llama: "ethereum",
     chainId: 1,
   },
