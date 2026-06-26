@@ -1,14 +1,3 @@
-# stocks-advisor
-
-Analyzes individual stocks one at a time — runs a **5-seat analyst panel** (fundamental / technical / narrative / sentiment / smart-money) per stock and outputs a concrete **entry plan** (price zone + bar-close trigger + market-based stop) with a **BUY / WATCH / SKIP** decision.
-
-Input: user-supplied ticker list, a Google Sheet of holdings, or stocks discovered live from a named market theme.
-
-> Educational analysis, not financial advice. Single stocks are satellites; the index is the bar.
-
-## Architecture
-
-```mermaid
 flowchart TD
     USER(["User prompt"])
 
@@ -112,48 +101,3 @@ portfolio synthesis, sizing, concentration"]]
 
     USER --> MEM --> SHEET --> SEED --> SEQ
     PERSIST --> SIGNAL --> CHAIR
-```
-
-## Two input modes
-
-| Mode | Input | Verdicts |
-|---|---|---|
-| **Watchlist / Theme discovery** | Explicit tickers or live theme discovery | BUY / WATCH / SKIP |
-| **Portfolio review** | Google Sheet URL (holdings + cost basis) | HOLD / ADD / TRIM / EXIT + tax-harvest table |
-
-## The 5 seats
-
-| Seat | Lens | Output |
-|---|---|---|
-| **Fundamental** | FCF yield, PE, PEG, margins, moat — margin of safety at current price? | STRONG / GOOD / FAIR / POOR |
-| **Technical** (Bernstein) | Set-Up → Trigger → Follow-Through. Named setup + bar-close trigger + market-based stop. No trigger = no trade. | SETUP_NAMED / NO_SETUP / BROKEN |
-| **Narrative / Macro** | `read_news.ts --source ft,wsj` for event discovery; feed scripts for verbatim citation; `web_fetch` for breadth. Theme phase classification. No fabrication. | EARLY / MID / LATE / FADING |
-| **Sentiment** | Contrarian read: short%, institutional%, analyst consensus, RSI extension | QUIET_ACCUM / NEUTRAL / CROWDED / EXTREME |
-| **Smart-Money** | `web_fetch` disclosed flows: Form 4 (openinsider), 13F (13f.info), 13D (EDGAR), PTR (capitoltrades). ≥2 classes agreeing → verdict. No fabrication. | ACCUMULATING / DISTRIBUTING / NEUTRAL |
-
-## Verdict rules
-
-```
-BUY   = Fundamental ≥ GOOD  AND  SETUP_NAMED  AND  phase ∈ {EARLY,MID}  AND  Sentiment ≠ EXTREME
-WATCH = Fundamental ≥ GOOD  BUT  NO_SETUP (wait for trigger)
-SKIP  = Fundamental = POOR  OR   phase ∈ {LATE,FADING}  OR  Technical = BROKEN
-SKIP dominates all other signals.
-Conviction 1–5: start at 3, ±1 per alignment signal.
-Smart-money is a conviction modifier (not a primary driver):
-  +1 if ACCUMULATING with ≥2 other seats aligned
-  −1 if DISTRIBUTING (also caps BUY conviction at 3/5)
-```
-
-## Hard constraints
-
-- **TradingView MCP lives only in the orchestrator** — subagents receive injected data, cannot call MCP.
-- **One chart slot** — data pull is strictly sequential, one ticker at a time.
-- **ETF / sleeve allocation** → `tradfi-portfolio-manager`. This skill is individual stocks only.
-- **Portfolio synthesis** → `stock-chair`. This skill stops at per-name entry plans.
-
-## Layout
-
-| Path | What |
-|---|---|
-| `SKILL.md` | Full operating instructions |
-| `scripts/fundamentals.py` | yfinance data helper — writes `{TICKER}.json.out.json` |

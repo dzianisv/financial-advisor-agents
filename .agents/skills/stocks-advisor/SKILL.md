@@ -1,6 +1,6 @@
 ---
 name: stocks-advisor
-description: "Portfolio-agnostic equity advisor. Analyzes a user-supplied ticker list, a Google Sheet of holdings, OR discovers stocks via current market themes (AI supply chain, robotics, energy transition, defense, fintech) discovered LIVE via web_fetch. Runs a 4-seat analyst panel per stock (fundamental / technical / narrative-macro / sentiment-positioning) in parallel subagents. When holdings are provided (Google Sheet URL), outputs HOLD/ADD/TRIM/EXIT per position with tax harvest table and cash deployment plan. When discovering or analyzing a watchlist, outputs entry zone, bar-close trigger, market-based stop, conviction, theme tag. Triggers: \"run the stock panel\", \"analyze these stocks: [list]\", \"review my portfolio: [sheet URL]\", \"find stocks in the AI supply chain theme\", \"what stocks should I look at this week\", \"find entry points for my watchlist\". Individual stocks only. Educational, not advice."
+description: "Portfolio-agnostic equity advisor. Analyzes a user-supplied ticker list, a Google Sheet of holdings, OR discovers stocks via current market themes (AI supply chain, robotics, energy transition, defense, fintech) discovered LIVE via web_fetch. Runs a 5-seat analyst panel per stock (fundamental / technical / narrative-macro / sentiment-positioning / smart-money-institutional-flows) in parallel subagents. When holdings are provided (Google Sheet URL), outputs HOLD/ADD/TRIM/EXIT per position with tax harvest table and cash deployment plan. When discovering or analyzing a watchlist, outputs entry zone, bar-close trigger, market-based stop, conviction, theme tag. Triggers: \"run the stock panel\", \"analyze these stocks: [list]\", \"review my portfolio: [sheet URL]\", \"find stocks in the AI supply chain theme\", \"what stocks should I look at this week\", \"find entry points for my watchlist\". Individual stocks only. Educational, not advice."
 license: MIT
 compatibility: opencode
 metadata:
@@ -12,7 +12,7 @@ metadata:
 
 # Stocks Portfolio Manager
 
-Analyze a set of individual stocks **one at a time** → run a 4-seat analyst panel per stock → output a
+Analyze a set of individual stocks **one at a time** → run a 5-seat analyst panel per stock → output a
 concrete **entry plan** (zone + trigger + stop) and a BUY / WATCH / SKIP decision. The stock list is
 either supplied by the user or **discovered live** from the market themes currently driving institutional
 flows. Nothing is hardcoded — no positions, no themes.
@@ -34,7 +34,7 @@ Holdings: https://docs.google.com/spreadsheets/d/1aunLbpNGo85WqrMHiIsy6nFUija4Ln
 Tab: IBKR
 Cash to deploy: $26,320
 ```
-The skill reads your positions from the sheet (ticker, qty, cost basis), then runs the 4-seat panel
+The skill reads your positions from the sheet (ticker, qty, cost basis), then runs the 5-seat panel
 per position. Verdicts become **HOLD / ADD / TRIM / EXIT** (not BUY/WATCH/SKIP) because cost basis
 and P&L context are known. Output includes a tax-harvest table and cash deployment plan.
 
@@ -58,9 +58,10 @@ Follow all skill instructions:
 - Per ticker, sequentially: chart_get_state → dedup studies → set_symbol (NASDAQ:/NYSE:) →
   D OHLCV (365 summary + 250 bars) → study values → W OHLCV → capture_screenshot
 - Run scripts/fundamentals.py per ticker; inject its JSON into the data package
-- Spawn the 4 seats in PARALLEL subagents (fundamental / technical / narrative / sentiment),
+- Spawn the 5 seats in PARALLEL subagents (fundamental / technical / narrative / sentiment / smart-money),
   data package injected — subagents NEVER call TradingView or yfinance
-- Narrative seat: pull WSJ/FT via the feed scripts (`feeds/wsj.ts`/`feeds/ft.ts`) + web_fetch Bloomberg/Reuters, quote verbatim, classify theme phase
+- Narrative seat: read_news.ts (--source ft,wsj) for event discovery + feed scripts for verbatim citation + web_fetch Bloomberg/Reuters, classify theme phase
+- Smart-money seat: web_fetch openinsider/13f.info/EDGAR/capitoltrades per ticker for disclosed flows
 - Apply the verdict decision table → BUY / WATCH / SKIP with entry zone + trigger + stop
 - Print per-stock blocks + the final signal table with the theme map
 Educational, not financial advice.
@@ -80,7 +81,7 @@ Educational, not financial advice.
    tickers cannot be pulled at once. **The data pull is strictly sequential, one ticker at a time.** Track
    progress in the `todos` table so an interrupted run resumes cleanly.
 3. **Sequential data pull, parallel analysis.** The TradingView pull must be serial (single slot); the
-   four seats per stock share nothing, so spawn them **in parallel** once the package is assembled.
+   five seats per stock share nothing, so spawn them **in parallel** once the package is assembled.
 4. **TradingView symbol mapping:** use `NASDAQ:{TICKER}` or `NYSE:{TICKER}` for US stocks. If the exchange
    lookup fails, fall back to bare `{TICKER}`. When unsure of the exchange, call `tradingview-symbol_search`
    to resolve it before `chart_set_symbol`.
@@ -187,7 +188,7 @@ If no sheet URL was provided, skip this step and use the user-supplied ticker li
 
 ```sql
 INSERT INTO todos (id, title, description) VALUES
- ('stk-AVGO', 'Analyzing AVGO', 'Pull TradingView D/W + studies, run fundamentals.py, 4-seat panel, decide'),
+ ('stk-AVGO', 'Analyzing AVGO', 'Pull TradingView D/W + studies, run fundamentals.py, 5-seat panel, decide'),
  ('stk-MRVL', 'Analyzing MRVL', 'idem'),
  ('stk-VRT',  'Analyzing VRT',  'idem');
 -- one row per ticker in this run's list
@@ -198,9 +199,14 @@ Create the verdict tracker once:
 ```sql
 CREATE TABLE IF NOT EXISTS stock_analysis (
   symbol TEXT PRIMARY KEY, company TEXT, theme TEXT, theme_phase TEXT,
-  fundamental TEXT, technical TEXT, narrative TEXT, sentiment TEXT,
+  fundamental TEXT, technical TEXT, narrative TEXT, sentiment TEXT, smartmoney TEXT,
   decision TEXT, entry_low REAL, entry_high REAL, trigger TEXT,
   stop REAL, target REAL, conviction INTEGER, status TEXT DEFAULT 'pending');
+```
+
+```bash
+# Back-compat: pre-existing 4-seat tables lack the smartmoney column; idempotent — error suppressed if column already exists
+sqlite3 "$DB" 'ALTER TABLE stock_analysis ADD COLUMN smartmoney TEXT;' 2>/dev/null || true
 ```
 
 ---
@@ -245,16 +251,17 @@ Any field yfinance lacks is `null` — never fill a null with a guess.
 from `summary=true`, the daily/weekly close arrays) with the full `fundamentals.py` JSON. This single
 package is what every seat receives — seats add nothing to it except the narrative seat's fetched news.
 
-**1d. Spawn the 4 seats IN PARALLEL** (task subagents), each with the **same** package injected. Each seat
+**1d. Spawn the 5 seats IN PARALLEL** (task subagents), each with the **same** package injected. Each seat
 reads ONE lens and returns the fixed shape below. Seats share nothing, so they run concurrently.
 
 ---
 
-## The 4-seat panel (subagent prompts — reuse verbatim, fill the blanks)
+## The 5-seat panel (subagent prompts — reuse verbatim, fill the blanks)
 
 > The data package is injected into every seat. Subagents are a **context firewall**: they reason over the
-> package only and never pull MCP/yfinance data. Only the narrative seat may reach external news — via
-> `web_fetch` **and** the paywall-free feed scripts (`feeds/wsj.ts`/`feeds/ft.ts`, run with `bun`).
+> package only and never pull MCP/yfinance data. External calls allowed: the **narrative seat** may
+> web_fetch news + run paywall-free feed scripts (`feeds/wsj.ts`/`feeds/ft.ts`); the **smart-money seat**
+> may web_fetch disclosed-flow sources (openinsider.com, 13f.info, EDGAR, capitoltrades.com). All other seats: injected data only.
 
 ### Seat 1 — Fundamental (grounded in `fundamental-analysis`)
 ```
@@ -316,14 +323,15 @@ DATA PACKAGE:
 ⛔ HARD RULE: call web_fetch on a real URL before citing it. No fetched URL = not a source.
 A fabricated headline invalidates the whole verdict.
 
-GET WSJ + FT FIRST via the paywall-free feed scripts (https://www.wsj.com/news/markets and
-https://www.ft.com/markets are bot-blocked from agent IPs — do NOT rely on web_fetching them):
+GET NEWS IN TWO STEPS (read_news.ts for discovery; feed scripts for citation — why: read_news.ts events
+cluster multi-outlet coverage into deduplicated events but sources(json) lacks a single canonical URL
+per event, so use read_news.ts for topic breadth, then pull verbatim-citeable teasers via feed scripts):
+  bun .agents/skills/read-news/scripts/read_news.ts --source ft,wsj --query "<theme/ticker entities>" --days 7
   bun .agents/skills/read-news/scripts/feeds/wsj.ts --feed markets,business --query "<theme/ticker>" --days 7 --text
   bun .agents/skills/read-news/scripts/feeds/ft.ts  --section markets,companies --query "<theme/ticker>" --days 7 --text
-Each record is a real wsj.com/ft.com URL + a 1-sentence publisher teaser + date. The teaser is itself a
-verbatim publisher quote — cite it as [T1]/[T2] url (date) — "<teaser>" WITHOUT needing the paywalled body.
-To deepen a quote, optionally web_fetch the article URL the script returned (works when logged in; if it
-paywalls, the teaser still stands as the citation). Then fetch ≥1 of the non-paywalled outlets for breadth:
+Each feed-script record = real wsj.com/ft.com URL + verbatim publisher teaser + date. Cite as:
+  [T1]/[T2] url (date) — "<teaser>" (teaser is verbatim publisher text — no paywalled body needed).
+Then web_fetch ≥1 non-paywalled outlet for additional breadth:
 Bloomberg (https://www.bloomberg.com/markets), Reuters (https://www.reuters.com/markets/), Yahoo Finance
 topic pages. Quote verbatim — never paraphrase from memory.
 
@@ -365,10 +373,52 @@ Return ONLY this shape:
   BLIND SPOT: <one line — positioning can stay crowded for years in a strong trend>
 ```
 
+### Seat 5 — Smart-Money / Institutional Flows (disclosed-flows)
+```
+You are the SMART-MONEY seat. Fetch ONLY via web_fetch — NO TradingView, NO yfinance.
+Cover 4 per-ticker disclosed-flow classes for a US equity: Form 4 insider buys, 13F institutional
+holders, 13D/13G activist stakes, congressional PTR buys. Skip market-implied spokes
+(options/dark-pool/polymarket — not per-equity queryable at this resolution; the full
+analyst-smartmoney lens covers them).
+
+⛔ HARD RULE: web_fetch a real URL before citing any filing, holder, or transaction.
+No fetched URL = not a source. Fabricated filing or transaction → verdict invalidated.
+<2 fetched sources OR no signal found → output NEUTRAL + "INSUFFICIENT DATA — do not guess".
+
+DATA PACKAGE: <inject: company name + ticker (your query inputs)>
+
+FETCH (web_fetch each URL; stop early if signal is clear):
+  Form 4: https://openinsider.com/screener?s={TICKER}   — code P only, last 30d
+     ≥3 distinct insiders → ACC | 2 incl. CEO/CFO → ACC | 1 buy → NEUTRAL | sells → ignore
+  13F:    https://13f.info/stock/{TICKER}  (fallback: https://www.hedgefollow.com/{TICKER})
+     net adds > net trims last Q → ACC | mixed → NEUTRAL | net trims dominant → DIST
+  13D:    https://efts.sec.gov/LATEST/search-index?q=%22{TICKER}%22&forms=SC+13D,SC+13G&dateRange=custom&startdt={90d_ago}
+     new 13D/13G in last 90d → ACC | none → NEUTRAL
+  PTR:    https://www.capitoltrades.com/trades?ticker={TICKER}&txType=buy
+     ≥3 different members buying → ACC | fewer → NEUTRAL
+
+SYNTHESIS (analyst-smartmoney verdict contract):
+  ACCUMULATING if ≥2 classes ACC | DISTRIBUTING if ≥2 classes DIST | else NEUTRAL
+  CONVICTION: HIGH ≥3 aligned | MED 2 aligned | LOW 1 | N/A on conflict or NEUTRAL
+  Hedge-as-signal check: a 13F put or institutional put block is NOT a buy — never count as ACC.
+
+Return ONLY:
+  VERDICT:      ACCUMULATING | DISTRIBUTING | NEUTRAL
+  CONVICTION:   HIGH | MED | LOW | N/A
+  Form 4:       [ACC/DIST/NEUTRAL/UNAVAIL] — {one line: cluster_size or "no open-market purchases"}
+  13F:          [ACC/DIST/NEUTRAL/UNAVAIL] — {one line: net adds vs trims, key fund if notable}
+  13D:          [ACC/DIST/NEUTRAL/UNAVAIL] — {one line: activist + stake % or "none in 90d"}
+  PTR:          [ACC/DIST/NEUTRAL/UNAVAIL] — {one line: member names + count or "none"}
+  CONFIRMATION: {N classes agreeing — e.g. "2 of 4: Form4 + 13F both ACC"}
+  INVALIDATION: {e.g. "Form 4 cluster sell or 13F net reduction >20% next Q flips DIST"}
+  SOURCES:      [every URL actually fetched — never omit; or "INSUFFICIENT DATA"]
+  NOTE: Educational only. 13F: 45-day lagged long-only. PTR: alpha contested post-STOCK Act.
+```
+
 **1e. Persist the seat verdicts and decision:**
 ```sql
 UPDATE stock_analysis SET company=?, theme=?, theme_phase=?, fundamental=?, technical=?,
-  narrative=?, sentiment=?, decision=?, entry_low=?, entry_high=?, trigger=?, stop=?, target=?,
+  narrative=?, sentiment=?, smartmoney=?, decision=?, entry_low=?, entry_high=?, trigger=?, stop=?, target=?,
   conviction=?, status='done' WHERE symbol=?;
 UPDATE todos SET status='done' WHERE id='stk-{TICKER}';
 ```
@@ -403,7 +453,13 @@ WATCH, the **technical trigger** decides — *no trigger, no trade* (Bernstein).
 bar-close trigger is always a WATCH, never a BUY.
 
 **Conviction (1–5):** start at 3. +1 if ≥3 seats align; +1 if EARLY_CYCLE with QUIET_ACCUM positioning;
-−1 if Sentiment CROWDED; −1 if PEG > 2 or negative FCF yield; −1 if LATE_CYCLE. Clamp to 1–5.
+−1 if Sentiment CROWDED; −1 if PEG > 2 or negative FCF yield; −1 if LATE_CYCLE;
++1 if Smart-money ACCUMULATING with ≥2 other seats aligned; −1 if Smart-money DISTRIBUTING (also caps
+any BUY conviction at 3/5 — insiders/institutions distributing is a hard ceiling). Clamp to 1–5.
+
+**Smart-money as confirming/conflicting input:** Smart-money (Seat 5) is NOT a primary BUY/WATCH/SKIP
+driver — the verdict table above governs the decision. It is a conviction modifier: DISTRIBUTING caps
+a BUY conviction at 3/5; ACCUMULATING adds +1 conviction when ≥2 other seats agree; NEUTRAL has no effect.
 
 **A WATCH verdict is an alert trigger** — "good company, wrong price; buy near $X / when RSI < V"
 is exactly when to register a notify-me job carrying the entry thesis via the **`mkt`** skill, so
@@ -424,6 +480,7 @@ the user is pinged when the zone/indicator fires. See *Set a buy-alert* below.
  Technical   : {SETUP_NAMED/NO_SETUP/BROKEN} — {setup name or "no trigger"}
  Narrative   : {EARLY/MID/LATE/FADING} — {one line: why}
  Sentiment   : {QUIET_ACCUM/NEUTRAL/CROWDED/EXTREME} — {one line}
+ Smart-money : {ACCUMULATING/DISTRIBUTING/NEUTRAL} — {CONVICTION: HIGH/MED/LOW | one line: key signal}
 
  DECISION: {BUY / WATCH / SKIP}
  Entry zone : ${low}–${high}
@@ -476,7 +533,7 @@ User: "Run stocks-advisor on MRVL."
 Orchestrator (sequential): resolves `NASDAQ:MRVL`; pulls D/W OHLCV + RSI/BB/MACD/Volume + screenshot;
 runs `fundamentals.py` → `{price: 264.71, ma200: 116.31, vs_200d_ma: +127.6%, fwd_pe: 42.9, peg: 1.58,
 fcf_yield: 0.98, rev_growth: 27.6%, earnings_growth: -80.4%, short: 4.7%, inst: 85.5%, rec_mean: 1.45,
-analysts: 41, dd_from_52wh: -19.8%}`. Assembles the package, spawns 4 seats in parallel.
+analysts: 41, dd_from_52wh: -19.8%}`. Assembles the package, spawns 5 seats in parallel.
 
 Seat verdicts:
 - Fundamental: **FAIR** — fwd P/E 42.9, PEG 1.58, FCF yield 0.98% (rich); but rev +27.6% AI-driven. Thin
@@ -508,6 +565,8 @@ $280 trigger rule must clear strategy-discovery-backtest before risking capital.
 - [ ] The honest base-rate note is present: single names are satellites, index is the bar; passing panels
       are hypotheses to be backtested in `strategy-discovery-backtest`.
 - [ ] A TradingView screenshot is embedded inline (via the `view` tool on the `file_path`) per stock.
+- [ ] The smart-money seat cited ≥1 real filing/trade URL it actually web_fetched (openinsider, 13f.info,
+      EDGAR, or capitoltrades), or returned `NEUTRAL — INSUFFICIENT DATA`; no filing is fabricated.
 - [ ] Portfolio sizing/concentration was deferred to `stock-chair`; ETF allocation was deferred to
       `tradfi-portfolio-manager`. This skill stayed on individual-stock entries only.
 
@@ -534,7 +593,7 @@ reminder to re-evaluate, not an order.
 
 ## Done when
 
-Each analyzed stock has a 4-seat panel, a BUY/WATCH/SKIP decision from the verdict table, and a concrete
+Each analyzed stock has a 5-seat panel, a BUY/WATCH/SKIP decision from the verdict table, and a concrete
 entry plan (zone + trigger + stop + conviction + invalidation); the signal table with the theme map is
 printed; every news claim is sourced; and the output is flagged as an educational, backtest-gated
 hypothesis — not advice.
