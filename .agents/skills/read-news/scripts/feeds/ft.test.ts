@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { parseFtRss, normalizeUrl, stripHtml, filterAndRank } from "./fetch_ft.ts";
+import { parseFtRss, normalizeUrl, stripHtml, filterAndRank } from "./ft.ts";
 
 // Fixture mirrors real FT section RSS: CDATA-wrapped <title>/<description>, RFC-822 <pubDate>.
 const FT_RSS = `<?xml version="1.0"?>

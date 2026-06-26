@@ -1,6 +1,6 @@
 ---
 name: narrative-news
-description: The DATA-ONLY news gather seat for the crypto panel. Orchestrates the feed-* source adapters → crypto-news-store (dedup + state) → emits ONLY the NEW or materially-updated EVENTS (not articles) for the consolidated brief, each tagged PRICED_IN vs ACTIONABLE_CONTEXT with a source_count. Use when running the research-crypto-market gather phase, when asked "what crypto news/narrative matters right now", "any new catalysts", "narrative seat", or for the FR1.8 news/narrative category. Depends on feed-* + crypto-news-store. Data only — no opinions, no buy/sell.
+description: The DATA-ONLY news gather seat for the crypto panel. Orchestrates the read-news pipeline (fetch + dedup + state) → emits ONLY the NEW or materially-updated EVENTS (not articles) for the consolidated brief, each tagged PRICED_IN vs ACTIONABLE_CONTEXT with a source_count. Use when running the research-crypto-market gather phase, when asked "what crypto news/narrative matters right now", "any new catalysts", "narrative seat", or for the FR1.8 news/narrative category. Depends on read-news. Data only — no opinions, no buy/sell.
 license: MIT
 compatibility: opencode
 metadata:
@@ -15,9 +15,9 @@ The **data-only** Gather seat the `research-crypto-market` workflow calls for th
 category (PRD FR1.8). It produces **EVENTS, not articles, not opinions** — the panel debates; this seat
 only reports what happened, deduped and state-aware.
 
-**Depends on:** [[feed-decrypt]] · [[feed-cointelegraph]] · [[feed-coindesk]] · [[feed-theblock]] ·
-[[feed-bitcoinmagazine]] · [[feed-coinbase]] (first-party blog/Bytes/institutional) · [[feed-ft]] · [[feed-wsj]] ·
-[[feed-bloomberg]] (input adapters) → [[crypto-news-store]] (dedup + cross-run state).
+**Depends on:** [[read-news]] — one Bun/TS pipeline that fetches all 9 feeds (Decrypt, CoinTelegraph,
+CoinDesk, The Block, Bitcoin Magazine, Coinbase, FT, WSJ, Bloomberg), normalizes, dedups, and keeps
+cross-run state.
 
 ## Hard rules
 
@@ -34,7 +34,7 @@ deterministic fetcher: it pulls every crypto-native RSS feed via urllib, normali
 state), and returns the **ranked, question-relevant** deduped events in one shot.
 
 ```bash
-python3 .agents/skills/crypto-news-store/news_fetch.py \
+bun .agents/skills/read-news/scripts/read_news.ts \
   --db .db/news.db --days 5 \
   --query "<key entities from the question: e.g. bitcoin BTC ETF Strategy MicroStrategy treasury Fed Coinbase COIN>"
 # → {fetched, feeds_ok, unavailable:[...], events:[ {title, source_count, ...} ranked by relevance ]}
@@ -45,12 +45,12 @@ failures come back in `unavailable` (loud, NFR6) — never silently dropped.
 
 After the brief is written, the workflow marks events surfaced so they don't repeat next run:
 ```bash
-python3 .agents/skills/crypto-news-store/news_store.py --db .db/news.db mark-surfaced --ids <ids...>
+bun .agents/skills/read-news/scripts/news_store.ts --db .db/news.db mark-surfaced --ids <ids...>
 ```
 
-**Fallback (only if news_fetch fails):** call the individual [[feed-decrypt]]…/[[feed-ft]] adapters by hand,
-merge their `{source,url,title,published_at,summary,...}` records into one JSON, then
-`news_store.py ingest --json records.json` and `query`/`new-since` as above.
+**Fallback (only if read_news fails):** pull a single source to stdout with
+`bun .agents/skills/read-news/scripts/feeds/ft.ts --text` (or `feeds/wsj.ts`, `feeds/crypto.ts`), then
+`bun .agents/skills/read-news/scripts/news_store.ts ingest --json records.json` and `query`/`new-since` as above.
 
 ## Recency + materiality filter (NFR3)
 

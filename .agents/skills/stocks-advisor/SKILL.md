@@ -60,7 +60,7 @@ Follow all skill instructions:
 - Run scripts/fundamentals.py per ticker; inject its JSON into the data package
 - Spawn the 4 seats in PARALLEL subagents (fundamental / technical / narrative / sentiment),
   data package injected — subagents NEVER call TradingView or yfinance
-- Narrative seat: pull WSJ/FT via the feed scripts (`fetch_wsj.ts`/`fetch_ft.ts`) + web_fetch Bloomberg/Reuters, quote verbatim, classify theme phase
+- Narrative seat: pull WSJ/FT via the feed scripts (`feeds/wsj.ts`/`feeds/ft.ts`) + web_fetch Bloomberg/Reuters, quote verbatim, classify theme phase
 - Apply the verdict decision table → BUY / WATCH / SKIP with entry zone + trigger + stop
 - Print per-stock blocks + the final signal table with the theme map
 Educational, not financial advice.
@@ -119,8 +119,8 @@ themes and their constituents by fetching, then reading, real pages:
    `wsj.com`/`ft.com` listing pages below are bot-blocked from agent IPs — the feed scripts return real
    article URLs + a verbatim publisher teaser + date, no login needed):
    ```bash
-   bun .agents/skills/feed-wsj/scripts/fetch_wsj.ts --feed markets,business --days 5 --limit 25 --text
-   bun .agents/skills/feed-ft/scripts/fetch_ft.ts  --section markets,companies,global-economy --days 5 --limit 25 --text
+   bun .agents/skills/read-news/scripts/feeds/wsj.ts --feed markets,business --days 5 --limit 25 --text
+   bun .agents/skills/read-news/scripts/feeds/ft.ts  --section markets,companies,global-economy --days 5 --limit 25 --text
    ```
    Then `web_fetch` 1–2 of the **non-paywalled** listings for breadth:
    - `https://www.bloomberg.com/markets`
@@ -130,7 +130,7 @@ themes and their constituents by fetching, then reading, real pages:
    classification convention, not a fixed universe — add a bucket if the evidence supports a new one.
 3. **Anti-hallucination rule (same as the narrative seat):** you may only name a theme or a constituent
    you found this run in a page you actually `web_fetch`ed **or in feed-script output you actually ran**
-   (`fetch_wsj.ts`/`fetch_ft.ts` print real URLs + verbatim teasers — those count as fetched). No fetched
+   (`feeds/wsj.ts`/`feeds/ft.ts` print real URLs + verbatim teasers — those count as fetched). No fetched
    URL / no feed record = not a theme. Never list a "current narrative" from memory — narratives are
    exactly the thing that goes stale.
 
@@ -254,7 +254,7 @@ reads ONE lens and returns the fixed shape below. Seats share nothing, so they r
 
 > The data package is injected into every seat. Subagents are a **context firewall**: they reason over the
 > package only and never pull MCP/yfinance data. Only the narrative seat may reach external news — via
-> `web_fetch` **and** the paywall-free feed scripts (`fetch_wsj.ts`/`fetch_ft.ts`, run with `bun`).
+> `web_fetch` **and** the paywall-free feed scripts (`feeds/wsj.ts`/`feeds/ft.ts`, run with `bun`).
 
 ### Seat 1 — Fundamental (grounded in `fundamental-analysis`)
 ```
@@ -316,17 +316,16 @@ DATA PACKAGE:
 ⛔ HARD RULE: call web_fetch on a real URL before citing it. No fetched URL = not a source.
 A fabricated headline invalidates the whole verdict.
 
-FETCH NEWS via Google News RSS — the only reliable free path from agent IPs
-(ft.com/wsj.com bot-block direct fetches; Google News proxies are verified working):
-
-  FT:        web_fetch "https://news.google.com/rss/search?q=site:ft.com+<ticker>+when:30d&hl=en-US&gl=US&ceid=US:en"
-  WSJ:       web_fetch "https://news.google.com/rss/search?q=site:wsj.com+<ticker>+when:30d&hl=en-US&gl=US&ceid=US:en"
-  Bloomberg: web_fetch "https://news.google.com/rss/search?q=site:bloomberg.com+<ticker>+when:30d&hl=en-US&gl=US&ceid=US:en"
-  Broad:     web_fetch "https://news.google.com/rss/search?q=<ticker>+<theme>+2026&hl=en-US&gl=US&ceid=US:en"
-
-Each returns headlines + verbatim RSS teasers (~100-450 chars). Quote the teaser verbatim as [T1]/[T2].
-For full WSJ bodies: web_fetch web.archive.org/web/2/<wsj-url> (Wayback, works for WSJ, blocked for FT).
-Fetch ≥2 real URLs before producing a verdict. Quote verbatim — never paraphrase from memory.
+GET WSJ + FT FIRST via the paywall-free feed scripts (https://www.wsj.com/news/markets and
+https://www.ft.com/markets are bot-blocked from agent IPs — do NOT rely on web_fetching them):
+  bun .agents/skills/read-news/scripts/feeds/wsj.ts --feed markets,business --query "<theme/ticker>" --days 7 --text
+  bun .agents/skills/read-news/scripts/feeds/ft.ts  --section markets,companies --query "<theme/ticker>" --days 7 --text
+Each record is a real wsj.com/ft.com URL + a 1-sentence publisher teaser + date. The teaser is itself a
+verbatim publisher quote — cite it as [T1]/[T2] url (date) — "<teaser>" WITHOUT needing the paywalled body.
+To deepen a quote, optionally web_fetch the article URL the script returned (works when logged in; if it
+paywalls, the teaser still stands as the citation). Then fetch ≥1 of the non-paywalled outlets for breadth:
+Bloomberg (https://www.bloomberg.com/markets), Reuters (https://www.reuters.com/markets/), Yahoo Finance
+topic pages. Quote verbatim — never paraphrase from memory.
 
 Classify the theme phase:
   EARLY_CYCLE  — theme just forming, few names, skeptics dominate, flows starting
@@ -499,7 +498,7 @@ $280 trigger rule must clear strategy-discovery-backtest before risking capital.
       a vague "looks good". WATCH/SKIP names what would change it.
 - [ ] The technical seat **named a setup or said there is none**; no BUY without a live trigger.
 - [ ] The narrative seat cited ≥2 real article URLs it **actually web_fetched or got from the feed scripts**
-      (`fetch_wsj.ts`/`fetch_ft.ts`); every news claim carries an inline `[source: https://...]`; no URL = the claim was removed.
+      (`feeds/wsj.ts`/`feeds/ft.ts`); every news claim carries an inline `[source: https://...]`; no URL = the claim was removed.
 - [ ] Themes and constituents were **discovered live this run** (or the user supplied the list) — none
       asserted from memory.
 - [ ] The honest base-rate note is present: single names are satellites, index is the bar; passing panels

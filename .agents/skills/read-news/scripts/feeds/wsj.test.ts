@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { parseWsjRss, normalizeUrl, stripHtml, cleanTitle, filterAndRank } from "./fetch_wsj.ts";
+import { parseWsjRss, normalizeUrl, stripHtml, cleanTitle, filterAndRank } from "./wsj.ts";
 
 // Fixture mirrors real Dow Jones public RSS: CDATA <title>/<description>, ?mod=rss_* tracking on
 // <link>, and a non-URL <guid> (WSJ uses opaque ids like "WP-WSJ-0003688412" — must NOT be used as url).

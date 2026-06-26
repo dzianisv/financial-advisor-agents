@@ -14,7 +14,7 @@ metadata:
 
 Apply a **reflexivity-first classification framework** to *how narrative and news events move crypto prices*.
 This skill is the **interpretation layer** over raw events; raw event fetching lives in `[[narrative-news]]`
-and `[[crypto-news-store]]`. The core analytical discipline: **news is lagging, not leading** — classify the
+and `[[read-news]]`. The core analytical discipline: **news is lagging, not leading** — classify the
 information state of the market before assigning any market impact, and always ask what would *disconfirm*
 the dominant narrative before assigning a posture.
 
@@ -44,7 +44,7 @@ narrative noise: if narrative is bullish but flows are negative, the market is t
    **RESTRICTION** (bearish — ban, enforcement action, hostile legislation). Specify jurisdiction: US
    SEC/CFTC news moves global markets; obscure-jurisdiction news rarely does.
 4. **ETF flow narrative check.** Weekly cumulative flow trend is the institutional demand story in
-   near-real-time. Primary fetch: ETF flow headlines returned by `news_fetch.py` (FT, Bloomberg, CoinDesk).
+   near-real-time. Primary fetch: ETF flow headlines returned by `read_news.ts` (FT, Bloomberg, CoinDesk).
    Raw daily table: farside.co.uk/btc/ — requires WebFetch/Chrome-CDP (403 to plain curl). If unavailable,
    derive direction from news headline tone and mark `etf_flow_alignment: UNKNOWN`.
    Rule: **narrative bullish + outflows = divergence, bearish signal**; narrative bearish + inflows =
@@ -53,7 +53,7 @@ narrative noise: if narrative is bullish but flows are negative, the market is t
    digestion**. Watch for "buy the rumor, sell the fact" — if an announcement was telegraphed (public HODL
    strategy, ATM offering filed), classify as priced_in; unannounced first-time buyers are new_catalyst.
 6. **Protocol/network events (halving, major upgrade, fork).** Long public lead time = mostly priced in by
-   announcement; check social volume via CoinGecko trending (keyless proxy — see `[[crypto-news-store]]`
+   announcement; check social volume via CoinGecko trending (keyless proxy — see `[[read-news]]`
    for curl command) for residual retail FOMO as execution date nears. LunarCrush/Santiment require paid
    keys — use CoinGecko trending as the keyless alternative.
    Post-event "nothing happened" = priced_in_confirmed; post-event "technical issue" = new_catalyst (bearish).
@@ -62,17 +62,17 @@ narrative noise: if narrative is bullish but flows are negative, the market is t
 
 ## How to apply the lens (decision procedure)
 
-1. **Fetch raw events — run `news_fetch.py` first.** This is the single entry point for all news sources
+1. **Fetch raw events — run `read_news.ts` first.** This is the single entry point for all news sources
    (CoinDesk, Decrypt, CoinTelegraph, The Block, Bitcoin Magazine, Coinbase blog, FT, WSJ, Bloomberg).
    Full source list, supplementary curl commands (Google News RSS, SEC EDGAR, CoinGecko trending), and
-   the ETF-flow fetch workaround all live in **`[[crypto-news-store]]`** — read that skill for details.
+   the ETF-flow fetch workaround all live in **`[[read-news]]`** — read that skill for details.
    ```bash
-   python3 .agents/skills/crypto-news-store/news_fetch.py \
+   bun .agents/skills/read-news/scripts/read_news.ts \
      --db .db/news.db --days 5 \
      --query "bitcoin BTC ETF regulation treasury strategy"
    # Returns deduped events ranked by query. ~270 articles across 9 feeds. Keyless, no API key needed.
-   # For targeted search: append Google News RSS (see crypto-news-store skill)
-   # For hard regulatory events: SEC EDGAR endpoint (see crypto-news-store skill)
+   # For targeted search: append Google News RSS (see read-news skill)
+   # For hard regulatory events: SEC EDGAR endpoint (see read-news skill)
    ```
 2. **Classify each event.** For every event assign:
    - `PRICED_IN` — covered >24 h ago by >3 top-tier outlets, or scheduled/expected event that occurred as anticipated.
@@ -82,7 +82,7 @@ narrative noise: if narrative is bullish but flows are negative, the market is t
    - Record `source_count` (number of top-tier outlets) and a one-line `market_impact`.
 3. **Identify the dominant narrative of the week** (1 sentence). The narrative is the story the market is
    telling itself — it may be different from the factual summary of events.
-4. **Check ETF flow reality vs narrative.** `news_fetch.py` events already surface ETF flow headlines
+4. **Check ETF flow reality vs narrative.** `read_news.ts` events already surface ETF flow headlines
    (e.g. *"Bitcoin ETF outflow pain eases"*) — classify these as `HARD` if the source is primary
    (Bloomberg/FT citing farside data). For the raw daily table: farside.co.uk/btc/ requires
    WebFetch/Chrome-CDP (Cloudflare blocks plain curl). State `etf_flow_alignment` as `ALIGNED`,
@@ -98,9 +98,9 @@ narrative noise: if narrative is bullish but flows are negative, the market is t
 
 | Question is about… | Action |
 |---|---|
-| Raw event fetch, news DB, latest headlines | `[[narrative-news]]` / `[[crypto-news-store]]` |
+| Raw event fetch, news DB, latest headlines | `[[narrative-news]]` / `[[read-news]]` |
 | "Is this priced in?" / classification of a specific event | Apply mental model 1 (source_count + age) |
-| ETF flows, institutional demand trend, BlackRock/Fidelity | Mental model 4; headlines via `news_fetch.py`; raw table via WebFetch farside.co.uk/btc/ (CDP only — see `[[crypto-news-store]]`) |
+| ETF flows, institutional demand trend, BlackRock/Fidelity | Mental model 4; headlines via `read_news.ts`; raw table via WebFetch farside.co.uk/btc/ (CDP only — see `[[read-news]]`) |
 | Regulatory news (SEC, CFTC, MiCA, Asia) | Mental model 3 (jurisdiction + clarity class) |
 | Corporate treasury / MicroStrategy / Metaplanet | Mental model 5 (rumor vs fact, telegraphed vs surprise) |
 | Halving, protocol upgrade, fork | Mental model 6 (lead time → priced_in check, social volume) |

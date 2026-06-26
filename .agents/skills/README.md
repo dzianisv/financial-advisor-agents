@@ -169,11 +169,8 @@ USER QUESTION + PORTFOLIO + DATE
      │  ├── crypto-onchain-data   ├── fundamental-analysis│
      │  ├── crypto-liquidity-data ├── trend-following     │
      │  ├── narrative-news        ├── dip-screener       │
-     │  │   └── feed-coindesk     ├── feed-fomc       │
-     │  │   └── feed-cointelegraph└── portfolio-monitor   │
-     │  │   └── feed-theblock                            │
-     │  │   └── feed-decrypt                             │
-     │  │   └── feed-bitcoinmagazine                     │
+     │  │   └── read-news         ├── feed-fomc          │
+     │  │       (9 feeds)         └── portfolio-monitor   │
      │  ├── analyst-derivatives-positioning              │
      │  ├── prediction-market-odds                       │
      │  └── regime-detection                             │
@@ -361,38 +358,34 @@ dip-screener   crypto-dip-     13f-watch          trend-stock-
 
 ---
 
-### 8. News pipeline (feed-* → narrative-news → crypto-news-store)
+### 8. News pipeline (read-news → narrative-news)
 
-Source adapters normalize RSS/API into a common article record. The narrative-news skill orchestrates them into deduped EVENTS.
+One Bun/TypeScript skill fetches every feed, normalizes to a common article record, dedups into EVENTS,
+and keeps cross-run state. The narrative-news skill reads those events and tags them.
 
 ```
-                         SOURCE ADAPTERS (feed-*)
-    ┌────────────┬──────────────┬───────────────┬─────────────┐
-    │            │              │               │             │
-feed-coindesk  feed-      feed-theblock  feed-decrypt  feed-bitcoin-
-               cointelegraph                             magazine
-    │            │              │               │             │
-    │     MACRO feeds:         │               │             │
-    │     feed-bloomberg       │               │             │
-    │     feed-ft              │               │             │
-    │     feed-wsj             │               │             │
-    │            │              │               │             │
-    └────────┬───┴──────────┬──┴───────┬───────┘             │
-             │              │          │                     │
-             └──────────────┴──────────┴─────────────────────┘
+                          read-news (one unified pipeline)
+    ┌─────────────────────────────────────────────────────────────┐
+    │  feeds/  — 9 source adapters in one registry                 │
+    │    crypto.ts: coindesk decrypt cointelegraph theblock        │
+    │               bitcoinmagazine coinbase bloomberg             │
+    │    ft.ts · wsj.ts  (canonical paywalled-macro fetchers)      │
+    │                          │                                   │
+    │  read_news.ts — fetch all → ingest → query / new-since       │
+    │                          │                                   │
+    │  news_store.ts — SQLite + FTS5 BM25                          │
+    │    ├── deterministic near-dup (SimHash/Jaccard) clustering   │
+    │    ├── RRF hybrid retrieval (BM25 + cluster rank)            │
+    │    ├── cross-run state (event_cluster_id)                    │
+    │    └── emits EVENTS (not articles) — "what's new since last" │
+    └─────────────────────────────────────────────────────────────┘
                                    │
-                          narrative-news (orchestrator)
-                          ├── calls each feed-* adapter
-                          ├── normalizes to common record
-                          └── tags PRICED_IN vs ACTIONABLE_CONTEXT
+                          narrative-news / analysis-narrative
+                          ├── reads NEW/updated events
+                          └── tags PRICED_IN vs ACTIONABLE_CONTEXT vs NEW_CATALYST
                                    │
-                          crypto-news-store
-                          ├── SQLite + FTS5 BM25
-                          ├── deterministic near-dup clustering
-                          ├── cross-run state (event_cluster_id)
-                          └── emits EVENTS (not articles) — "what's new since last run"
-                                   │
-                          → consumed by: crypto-research-desk, stock-research-desk
+                          → consumed by: crypto-research-desk, stock-research-desk,
+                                          crypto-advisor, stocks-advisor
 ```
 
 ---
@@ -656,7 +649,6 @@ robinhood-connector ───── Robinhood agentic MCP (notification → live
 | [crypto-token-screener](crypto-token-screener/SKILL.md) | 6-point value-accrual filter + BTC hurdle rate |
 | [crypto-liquidity-data](crypto-liquidity-data/SKILL.md) | Howell global liquidity, Fed BS, RRP, TGA, M2, DXY |
 | [crypto-onchain-data](crypto-onchain-data/SKILL.md) | MVRV-Z, NUPL, realized price, Puell, hashrate |
-| [crypto-news-store](crypto-news-store/SKILL.md) | SQLite + FTS5 dedup event store (cross-run state) |
 | [defi-portfolio-manager](defi-portfolio-manager/SKILL.md) | DeFi book: yield + risk + protocol audit (crypto-native) |
 
 ### Equity desk
@@ -667,19 +659,12 @@ robinhood-connector ───── Robinhood agentic MCP (notification → live
 | [stock-research-desk](stock-research-desk/SKILL.md) | Consolidate equity gather seats → one sourced brief |
 | [research-manager](research-manager/SKILL.md) | Intake/triage — discovers skills live, assembles desk for query |
 
-### News feeds (feed-*)
+### News feeds
 
 | Skill | Source |
 |-------|--------|
-| [feed-coindesk](feed-coindesk/SKILL.md) | CoinDesk RSS adapter |
-| [feed-cointelegraph](feed-cointelegraph/SKILL.md) | CoinTelegraph RSS adapter |
-| [feed-theblock](feed-theblock/SKILL.md) | The Block RSS adapter |
-| [feed-decrypt](feed-decrypt/SKILL.md) | Decrypt RSS adapter |
-| [feed-bitcoinmagazine](feed-bitcoinmagazine/SKILL.md) | Bitcoin Magazine RSS adapter |
-| [feed-bloomberg](feed-bloomberg/SKILL.md) | Bloomberg headline adapter (paywalled) |
-| [feed-ft](feed-ft/SKILL.md) | Financial Times RSS adapter (paywalled) |
-| [feed-wsj](feed-wsj/SKILL.md) | Wall Street Journal RSS adapter (paywalled) |
-| [narrative-news](narrative-news/SKILL.md) | Orchestrates feed-* → deduped events (PRICED_IN/ACTIONABLE) |
+| [read-news](read-news/SKILL.md) | Unified Bun/TS pipeline — fetch 9 feeds (CoinDesk, Decrypt, CoinTelegraph, The Block, Bitcoin Magazine, Coinbase, FT, WSJ, Bloomberg) → dedup → SQLite/FTS5 BM25 store → query |
+| [narrative-news](narrative-news/SKILL.md) | Reads read-news events → deduped events (PRICED_IN/ACTIONABLE) |
 
 ### Trading desks + execution
 

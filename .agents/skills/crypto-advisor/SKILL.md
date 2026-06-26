@@ -167,7 +167,7 @@ For any non-L1 token (not BTC/ETH/SOL/TON), you MUST verify protocol mechanics v
 
 **Narrative seat — mandatory sourcing protocol.**
 
-**⛔ HARD RULE: You MUST call `web_fetch` on a real URL before you can cite it as a source — OR cite a record printed by the feed scripts (`fetch_wsj.ts`/`fetch_ft.ts`/`news_fetch.py`), which return real URLs + verbatim publisher teasers. If you neither `web_fetch`ed the URL nor got it from a feed script this run, it is NOT a source — do not write it down. A fabricated headline with no URL is a hallucination and invalidates the entire narrative verdict.**
+**⛔ HARD RULE: You MUST call `web_fetch` on a real URL before you can cite it as a source — OR cite a record printed by the feed scripts (`feeds/wsj.ts`/`feeds/ft.ts`/`read_news.ts`), which return real URLs + verbatim publisher teasers. If you neither `web_fetch`ed the URL nor got it from a feed script this run, it is NOT a source — do not write it down. A fabricated headline with no URL is a hallucination and invalidates the entire narrative verdict.**
 
 **Step-by-step (do this in order, do not skip):**
 
@@ -198,11 +198,11 @@ For any non-L1 token (not BTC/ETH/SOL/TON), you MUST verify protocol mechanics v
    quote — use it as a T2 source without needing the paywalled body). NOTE: `--query` is AND-of-words, so
    keep it to ONE topic word (e.g. `bitcoin`, `Fed`, `crypto`) or omit it and skim the top markets items:
    ```bash
-   bun .agents/skills/feed-wsj/scripts/fetch_wsj.ts --feed markets --days 5 --limit 20 --text          # top markets/macro
-   bun .agents/skills/feed-ft/scripts/fetch_ft.ts  --section markets,global-economy --query bitcoin --days 5 --text
+   bun .agents/skills/read-news/scripts/feeds/wsj.ts --feed markets --days 5 --limit 20 --text          # top markets/macro
+   bun .agents/skills/read-news/scripts/feeds/ft.ts  --section markets,global-economy --query bitcoin --days 5 --text
    ```
    For a broader consolidated crypto+macro event feed (deduped across all outlets), use [[narrative-news]]:
-   `python3 .agents/skills/crypto-news-store/news_fetch.py --db .db/news.db --days 5 --query "<token/theme>"`.
+   `bun .agents/skills/read-news/scripts/read_news.ts --db .db/news.db --days 5 --query "<token/theme>"`.
 
 2. **Read what actually came back.** If the fetch returns an error or no relevant content, write `[FETCH FAILED: <url>]` — do NOT count it toward the 3-source minimum, do NOT invent what it "would have said."
 
@@ -314,8 +314,8 @@ summary of what it said and why it was ranked T1/T2/T3.
 
 ```
 --- NEWS SOURCES ---
-(Only URLs you actually called web_fetch on — or that a feed script (fetch_wsj.ts/fetch_ft.ts/
-news_fetch.py) returned — appear here. No URL = no entry.
+(Only URLs you actually called web_fetch on — or that a feed script (feeds/wsj.ts/feeds/ft.ts/
+read_news.ts) returned — appear here. No URL = no entry.
 Every entry MUST start with https:// — source name alone is NOT acceptable.)
 
 BTC narrative (posture: BEARISH)
