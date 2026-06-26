@@ -204,6 +204,11 @@ CREATE TABLE IF NOT EXISTS stock_analysis (
   stop REAL, target REAL, conviction INTEGER, status TEXT DEFAULT 'pending');
 ```
 
+```bash
+# Back-compat: pre-existing 4-seat tables lack the smartmoney column; idempotent — error suppressed if column already exists
+sqlite3 "$DB" 'ALTER TABLE stock_analysis ADD COLUMN smartmoney TEXT;' 2>/dev/null || true
+```
+
 ---
 
 ## Step 1 — Sequential per-stock loop (orchestrator only; do NOT parallelize the data pull)
