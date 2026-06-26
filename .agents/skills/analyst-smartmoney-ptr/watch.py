@@ -4,8 +4,13 @@
 The HTTP fetching is done by the LLM agent (via WebFetch on capitoltrades.com).
 This script only manages the dedup ledger so tickers are never proposed twice.
 
+Dedup key: (ticker, transaction_date) — a new filing on the same ticker re-alerts;
+the same filing date on the same ticker is suppressed. Old rows without transaction_date
+have r.get("transaction_date","") == "" which never matches a real date, so they
+surface as new on next run (correct — they lack the date context to suppress).
+
 Usage:
-  watch.py seen <TICKER>                  # exit 0=already recommended; exit 1=NEW
+  watch.py seen <TICKER> --date YYYY-MM-DD   # exit 0=already recommended; exit 1=NEW
   watch.py record --ticker NVDA --member "Nancy Pelosi" --chamber house \\
                   --date 2026-01-15 --amount "$1,000,001+" --action purchase \\
                   [--reason "..."] [--committee "Science, Space & Technology"]
@@ -29,14 +34,39 @@ def _load() -> list:
         return [json.loads(l) for l in f if l.strip()]
 
 
+def _seen(ticker: str, transaction_date: str) -> bool:
+    """Return True if (ticker, transaction_date) pair already in ledger."""
+    t = ticker.upper()
+    return any(
+        r["ticker"].upper() == t and r.get("transaction_date", "") == transaction_date
+        for r in _load()
+    )
+
+
+def _record(ticker: str, transaction_date: str) -> None:
+    """Write a minimal ledger entry (used by tests and internal callers)."""
+    entry = {
+        "ticker": ticker.upper(),
+        "transaction_date": transaction_date,
+        "recommended_on": date.today().isoformat(),
+    }
+    os.makedirs(os.path.dirname(LEDGER) or ".", exist_ok=True)
+    with open(LEDGER, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
 def cmd_seen(a):
     t = a.ticker.upper()
-    hit = [r for r in _load() if r["ticker"].upper() == t]
-    if hit:
-        r = hit[0]
-        print(f"SEEN {t} — recommended {r['recommended_on']} via {r['member']} ({r['chamber']}); SKIP")
+    transaction_date = getattr(a, "date", "") or ""
+    if _seen(t, transaction_date):
+        rows = _load()
+        r = next(
+            r for r in rows
+            if r["ticker"].upper() == t and r.get("transaction_date", "") == transaction_date
+        )
+        print(f"SEEN {t}@{transaction_date} — recommended {r['recommended_on']} via {r.get('member','?')} ({r.get('chamber','?')}); SKIP")
         sys.exit(0)
-    print(f"NEW {t} — not yet recommended; ok to propose")
+    print(f"NEW {t}@{transaction_date} — not yet recommended; ok to propose")
     sys.exit(1)
 
 
@@ -46,10 +76,9 @@ def cmd_record(a):
     except ValueError:
         print(f"error: --date must be YYYY-MM-DD, got '{a.date}'", file=sys.stderr)
         sys.exit(2)
-    rows = _load()
     t = a.ticker.upper()
-    if any(r["ticker"].upper() == t for r in rows):
-        print(f"skip: {t} already recommended — dedup rule", file=sys.stderr)
+    if _seen(t, a.date):
+        print(f"skip: {t}@{a.date} already recommended — dedup rule", file=sys.stderr)
         sys.exit(3)
     entry = {
         "ticker": t,
@@ -84,8 +113,9 @@ def main():
     p = argparse.ArgumentParser(description="analyst-smartmoney-ptr dedup ledger")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    s = sub.add_parser("seen", help="check if ticker already recommended")
+    s = sub.add_parser("seen", help="check if ticker+date already recommended")
     s.add_argument("ticker")
+    s.add_argument("--date", default="", help="transaction date YYYY-MM-DD (required for date-scoped dedup)")
     s.set_defaults(fn=cmd_seen)
 
     s = sub.add_parser("record", help="record a new recommendation")
