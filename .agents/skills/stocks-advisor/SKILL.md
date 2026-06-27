@@ -81,6 +81,22 @@ full per-stock panel on the discovered names.
 
 ---
 
+## CONFIG — optional Notion publish target
+
+Publishing the run to Notion is **OPT-IN**. The target lives in
+`.cache/stocks-advisor/notion.yaml`, a YAML file with two fields:
+
+```yaml
+page_url: "https://app.notion.com/p/..."
+page_id: "<32-char hex id>"
+```
+
+The skill reads `page_id` at publish time (§Step 5) — never hardcode a page id in this file. If the
+file is missing OR `page_id` is empty, the skill **skips publishing silently** and finishes the run;
+absence is NOT an error (unlike stocks-daily, which stopped — this skill continues).
+
+---
+
 ## The honest base rate (state this every run)
 
 From the `fundamental-analysis` skill, on full-history backtests of the investable stock-selection methods
@@ -369,6 +385,13 @@ Precedence: EXIT dominates, then TRIM (concentration is its own lever, independe
 
 ## Output format per stock
 
+> **TOP RECAP rule (MANDATORY — applies to BOTH the chat output and the Notion page).** EVERY run's
+> report MUST OPEN with a 2–3 sentence prose RECAP at the very top, before any per-stock block and
+> before the signal table. In plain English it states: (a) the highest-confidence STRONG BUY / SELL
+> actions to take right now, each with one-line reasoning; and (b) the current market narrative in one
+> sentence. This is a prose TL;DR — the first thing the reader sees — and is **distinct** from the
+> Step 3.6 high-confidence RECAP *table* printed at the end. Keep it tight.
+
 ```
 ═══════════════════════════════════════════════════════
  {TICKER} — {COMPANY} — {DATE}
@@ -440,6 +463,35 @@ Rule: never print a verdict that depends on a source you cannot list here. No so
 
 ---
 
+## Step 3.6 — High-confidence recap + setup-alerts table (MANDATORY — final output, print LAST)
+
+The per-stock blocks and the signal table are the full record. End EVERY run with a tight recap so the user sees the actionable subset at a glance. Print these two tables as the final output.
+
+**RECAP — high-confidence only.** Include ONLY decisions with conviction ≥ 4/5 (or, for a holdings review, the unambiguous ADD / EXIT calls). Drop everything that is WATCH-without-a-trigger, NEUTRAL, or conviction ≤ 3 — those live in the full table above, not here. If nothing clears the bar, print "No high-confidence actions today — all names are WATCH (see table above)" rather than padding the list.
+
+```
+RECAP — high-confidence ({DATE})
+Asset   Action            Why (one line, plain English)
+-----   ------            -----------------------------
+{TICK}  BUY/ADD/EXIT/TRIM {≤12-word plain-English reason}
+...
+```
+
+**SETUP ALERTS — buy/sell only when a condition fires.** Every WATCH name that has a *defined* trigger (a price reclaim, a level, an indicator like RSI) goes here — not as a buy-now. State the exact condition and the action it unlocks. These are the names to register with the `mkt` skill so the user is pinged with the thesis when the condition hits (see "Set a buy-alert" section).
+
+```
+SETUP ALERTS ({DATE})
+Asset   Condition (exact)               Then do        Thesis (one line)
+-----   -----------------               -------        -----------------
+{TICK}  close > ${level} (reclaim)      BUY {zone}     {≤12-word reason}
+{TICK}  RSI(14) < 30 / pullback ${lvl}  ADD            {≤12-word reason}
+...
+```
+
+Rule: a name is in RECAP **or** SETUP ALERTS, never both — high-confidence-now vs buy-on-condition are mutually exclusive. After printing SETUP ALERTS, offer to register them via the `mkt` skill (the alert carries the thesis into the notification). This recap is required in BOTH normal and DEGRADED_TECH mode; in DEGRADED mode the alert conditions are MA/price levels (no live bar-close trigger).
+
+---
+
 ## Step 4 — Portfolio-level synthesis (hand off to `stock-chair`)
 
 The per-stock blocks answer "where do I enter each name." The **portfolio view** — concentration, hidden
@@ -448,6 +500,46 @@ factor/sector correlation across the BUY/WATCH names, what to fund a new buy by 
 should I buy given what I hold"), invoke `stock-chair` with: the user's holdings, the per-stock decisions,
 and the theme map. `stock-chair` returns the buy-AND-sell, sizing, and concentration check. This skill
 stops at per-name entry plans; it never sizes the book.
+
+---
+
+## Step 5 — Publish to Notion (if configured)
+
+This skill is the **single owner** of Notion publishing for stock research (`stocks-daily` delegates
+here). Publishing is opt-in and silent-skip — never fail the run because of it.
+
+1. **Read the publish target:**
+   ```sh
+   PAGE_ID=$(grep '^page_id:' .cache/stocks-advisor/notion.yaml 2>/dev/null | sed -E 's/.*"([a-f0-9]+)".*/\1/')
+   ```
+   If `.cache/stocks-advisor/notion.yaml` is missing OR `PAGE_ID` is empty → **skip this step silently**
+   and finish the run. Publishing is opt-in; absence is not an error (do NOT stop, do NOT warn).
+2. **Load Notion tools via ToolSearch:**
+   `select:mcp__claude_ai_Notion__notion-create-pages,mcp__claude_ai_Notion__notion-fetch`
+3. **Save to local file** (always — even if `PAGE_ID` is empty):
+   - Filename: `YYYY-MM-DD <narrative>.md` — same title that would be used for Notion.
+   - Path: `.cache/stocks-advisor/research/<title>.md`
+   ```bash
+   mkdir -p .cache/stocks-advisor/research
+   # TITLE = computed title string, e.g. "2026-06-26 AI-bubble derisking — rotate to healthcare"
+   # CONTENT = full report markdown (top recap + per-stock + sources + setup-alerts)
+   python3 -c "
+   import sys
+   title, content = sys.argv[1], sys.argv[2]
+   open(f'.cache/stocks-advisor/research/{title}.md', 'w').write(content)
+   " "$TITLE" "$CONTENT"
+   ```
+4. **Create a NEW child page under `PAGE_ID`** (only if `PAGE_ID` non-empty):
+   - **Title format: `YYYY-MM-DD <narrative>`** — the run date followed by a short narrative descriptor
+     of the run's dominant theme (e.g. `2026-06-26 AI-bubble derisking — rotate to healthcare/defense`).
+     Not a generic title.
+   - Content: the full run output as Notion-flavored Markdown — the 2–3 sentence TOP RECAP first (§Output
+     format per stock), then the narrative, the per-name decision tables, the SOURCES & DATA appendix
+     (§Step 3.5), and the high-confidence RECAP + SETUP ALERTS (§Step 3.6). Use real Notion table blocks,
+     not code-fenced text.
+5. On any Notion error, report it to the user and **continue** — never fail the run because publishing
+   failed.
+6. Print: `✅ Saved: .cache/stocks-advisor/research/<title>.md` and (if published) the Notion page URL.
 
 ---
 
@@ -480,6 +572,7 @@ $280 trigger rule must clear strategy-discovery-backtest before risking capital.
 
 ## Self-check before printing the signal table
 
+- [ ] The report **OPENS with the 2–3 sentence prose RECAP** (highest-confidence buy/sell to take now + one-line reasoning + the market narrative in one sentence) before any per-stock block or the signal table.
 - [ ] Every FULL-PANEL ticker has `status='done'` in `stock_analysis`; one-line-screened names (N>12 triage) carry a one-line note and are listed, not dropped.
 - [ ] Each stock block ends with a concrete **entry zone + bar-close trigger + market-based stop** — never
       a vague "looks good". WATCH/SKIP names what would change it.
@@ -497,6 +590,7 @@ $280 trigger rule must clear strategy-discovery-backtest before risking capital.
       `tradfi-portfolio-manager`. This skill stayed on individual-stock entries only.
 - [ ] recall.ts `source` was checked; if `grep-fallback`, the run is tagged MEMORY_DEGRADED and recalled stances flagged low-confidence.
 - [ ] A consolidated **SOURCES & DATA** appendix is printed (Step 3.5) listing every web_fetched news/filing URL, every feed-script record, and the market-data provenance (fundamentals.py tickers + technicals mode) — required in normal AND DEGRADED mode.
+- [ ] A final **RECAP (high-confidence only)** + **SETUP ALERTS** table is printed (Step 3.6); high-conviction-now and buy-on-condition names are split, never duplicated; if nothing clears the bar, that is stated explicitly.
 
 ## Set a buy-alert (notify-me-when) — for WATCH verdicts
 
@@ -524,4 +618,4 @@ reminder to re-evaluate, not an order.
 Each analyzed stock has a 5-seat panel, a BUY/WATCH/SKIP decision from the verdict table, and a concrete
 entry plan (zone + trigger + stop + conviction + invalidation); the signal table with the theme map is
 printed; every news claim is sourced; the consolidated SOURCES & DATA appendix (Step 3.5) is printed listing all web_fetched URLs, feed-script records, and market-data provenance; and the output is flagged as an educational, backtest-gated
-hypothesis — not advice.
+hypothesis — not advice; and a high-confidence RECAP + SETUP ALERTS table (Step 3.6) is printed last, splitting immediate high-conviction actions from buy-on-condition names. If `.cache/stocks-advisor/notion.yaml` is configured, a dated Notion page (title `YYYY-MM-DD <narrative>`, Step 5) was created and its URL returned to the user; if it is not configured, publishing was skipped silently (not an error).

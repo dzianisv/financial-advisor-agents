@@ -663,12 +663,29 @@ notion-create-pages
 
 The content is the full run output — signal table, per-token verdicts, news sources, Telegram recap — in markdown. No need to reformat; paste the blocks verbatim.
 
-**7d. Print the result:**
-```
-✅ Notion: https://app.notion.com/p/<page-id>
+**7d. Save to local file** (always — even if Notion is disabled):
+
+```bash
+TITLE="{computed title}"   # e.g. "2026-06-26 xfear AAVE buy"
+mkdir -p .cache/crypto-advisor/research
+python3 -c "
+import sys
+title = sys.argv[1]
+content = sys.argv[2]
+with open(f'.cache/crypto-advisor/research/{title}.md', 'w') as f:
+    f.write(content)
+" "$TITLE" "$FULL_REPORT_MARKDOWN"
 ```
 
-If the config is absent or `enabled: false`, skip silently (no error, no output).
+`$FULL_REPORT_MARKDOWN` = exec recap + Block 1 + Block 2 + Block 3 + Telegram recap, concatenated.
+
+**7e. Print the result:**
+```
+✅ Saved: .cache/crypto-advisor/research/{title}.md
+✅ Notion: https://app.notion.com/p/<page-id>   ← only if Notion enabled
+```
+
+If the config is absent or `enabled: false`, still save the file (7d always runs); skip Notion (7c).
 
 ---
 
