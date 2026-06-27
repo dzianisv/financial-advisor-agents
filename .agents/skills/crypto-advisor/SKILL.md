@@ -33,7 +33,7 @@ flowchart TD
 
     subgraph NEWS["News Pipeline  narrative seat only"]
         RN["read_news.ts\nfetch + ingest + query"]
-        NDB[".db/news.db"]
+        NDB[".cache/read-news/news.db"]
         RN --> NDB
     end
 
@@ -261,7 +261,7 @@ For any non-L1 token (not BTC/ETH/SOL/TON), you MUST verify protocol mechanics v
    bun .agents/skills/read-news/scripts/feeds/ft.ts  --section markets,global-economy --query bitcoin --days 5 --text
    ```
    For a broader consolidated crypto+macro event feed (deduped across all outlets), use [[narrative-news]]:
-   `bun .agents/skills/read-news/scripts/read_news.ts --db .db/news.db --days 5 --query "<token/theme>"`.
+   `bun .agents/skills/read-news/scripts/read_news.ts --db .cache/read-news/news.db --days 5 --query "<token/theme>"`.
 
 2. **Read what actually came back.** If the fetch returns an error or no relevant content, write `[FETCH FAILED: <url>]` — do NOT count it toward the 3-source minimum, do NOT invent what it "would have said."
 
@@ -366,7 +366,26 @@ price/RSI/MACD level hits. See *Set a buy-alert* below.
 
 ## Step 3 — Print the full run report
 
-Print **three blocks** in this exact order:
+**Always start the report with a 2–3 sentence exec recap** before Block 1. No headers — just plain text. Format:
+
+```
+{High-conviction signal}: {TOKEN} — {1-line reason why: key indicator + zone + quorum}.
+{Second signal if exists, else skip}.
+Narrative: {1 sentence on the dominant market theme right now — regime, macro driver, what's moving the space}.
+```
+
+Rules:
+- Lead with the highest-conviction BUY or SELL (most seats, clearest zone). Skip if nothing above HOLD.
+- If all signals are HOLD, say so in one sentence + the dominant reason (e.g. "All 11 tokens HOLD — trend bearish, waiting for 200wMA reclaim").
+- The narrative sentence must be grounded in a fetched source from this run. No URL = no claim.
+- Keep it under 3 sentences total. Not a list — flowing text.
+
+Example:
+```
+HIGH-CONVICTION BUY: AAVE — 4/5 seats bullish, zone=DEEP_VALUE (RSI 23, −62% from ATH, above 200wMA support at $62). BUY(small): LINK on RWA tailwind (Swift/Euroclear pipeline live). Narrative: Extreme Fear (F&G 18) — AI/tech macro selloff hit crypto hard this week; quality DeFi is at cycle-floor valuations while fundamentals (TVL, fees) held.
+```
+
+Print **three blocks** after the exec recap, in this exact order:
 
 ### Block 1 — Signal table (one-glance summary)
 ```
@@ -603,6 +622,53 @@ Educational only. Not financial advice. DYOR.
 ⛔ Never use `head -c 4000` — it can truncate multibyte emojis and silently cut the disclaimer.
 
 **⛔ If a narrative claim has no fetched URL, either drop the claim or replace it with "no specific catalyst" — do NOT state a news fact without a source link.**
+
+---
+
+## Step 7 — Publish to Notion (config-gated)
+
+Only runs if `.cache/crypto-advisor/notion.yaml` exists and `enabled: true`.
+
+**7a. Read the config:**
+```bash
+CONFIG=".cache/crypto-advisor/notion.yaml"
+[ -f "$CONFIG" ] && ENABLED=$(python3 -c "import yaml,sys; c=yaml.safe_load(open('$CONFIG')); print(c.get('enabled','false'))") || ENABLED=false
+```
+
+**7b. Build the page title** using `title_template` from the config:
+
+Derive each variable from the completed run:
+- `{date}` → today's date (`YYYY-MM-DD`)
+- `{fg_label}` → map the F&G value used in Step 2:
+  - 0–24 → `xfear`
+  - 25–49 → `fear`
+  - 50–74 → `neutral`
+  - 75–89 → `greed`
+  - 90–100 → `xgreed`
+- `{signals}` → take the top 1–2 BUY/BUY(small) tokens (by conviction, highest first), uppercase, space-joined, append ` buy`; if none, use `all hold`
+  - Examples: `AAVE buy`, `AAVE LINK buy`, `all hold`
+
+Full title example: `2026-06-26 xfear AAVE buy`
+
+**7c. Create the Notion page** using the Notion MCP tool:
+
+```
+notion-create-pages
+  parent: {"type": "page_id", "page_id": "<parent_page_id from config>"}
+  pages: [{
+    "properties": {"title": "<computed title>"},
+    "content": "<full report markdown: Block 1 + Block 2 + Block 3 + Telegram recap>"
+  }]
+```
+
+The content is the full run output — signal table, per-token verdicts, news sources, Telegram recap — in markdown. No need to reformat; paste the blocks verbatim.
+
+**7d. Print the result:**
+```
+✅ Notion: https://app.notion.com/p/<page-id>
+```
+
+If the config is absent or `enabled: false`, skip silently (no error, no output).
 
 ---
 

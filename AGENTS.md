@@ -95,15 +95,14 @@ Then `git add ... && git commit && git push` — DoD gate requires no uncommitte
 
 ## Research outputs → Notion
 
-All research goes into Notion under the [research page](https://app.notion.com/p/research-38cac25eb49f8072a1abe1c6d6e22e86). One page per run. Plain English. Short.
+Skills publish to Notion **only when their own config enables it.** Check `.cache/{skill}/notion.yaml` before publishing — do not publish if the file is absent or `enabled: false`.
 
-What belongs there:
-- Every `research-market` / `research-crypto-market` workflow output
-- 13F / 13D watch reports
-- Deep-research analyses (architecture, system design, etc.)
-- Daily crypto portfolio runs (via `crypto-daily`)
+| Skill | Config | Notion destination |
+|---|---|---|
+| `crypto-advisor` | `.cache/crypto-advisor/notion.yaml` | [crypto-advisor](https://app.notion.com/p/crypto-advisor-38cac25eb49f80dcb894e842589863cf) |
+| ad-hoc research | — | [research](https://app.notion.com/p/research-38cac25eb49f8072a1abe1c6d6e22e86) |
 
-Use the Notion MCP tools (`mcp__claude_ai_Notion__notion-create-pages`) with `parent page_id = 38cac25eb49f8072a1abe1c6d6e22e86`. Also write the file to `research/` as usual (git is the backup; Notion is the readable version).
+Title format: `YYYY-MM-DD-{narrative}` (e.g. `2026-06-26-xfear-aave-buy`). Always write `research/` too — git is the backup, Notion is the readable view.
 
 ## Memory model — two-tier, ranked (reuses OpenClaw memory-core)
 

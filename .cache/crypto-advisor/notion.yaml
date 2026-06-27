@@ -1,0 +1,13 @@
+enabled: true
+
+# Notion page where crypto-advisor runs are published
+parent_page_id: 38cac25eb49f80dcb894e842589863cf
+
+# Page title format.
+# {date}      → YYYY-MM-DD of the run
+# {fg_label}  → xfear | fear | neutral | greed | xgreed  (derived from F&G value)
+# {signals}   → top 1-2 BUY tickers (kebab-lower) + "-buy", or "all-hold"
+# Examples:   2026-06-26-xfear-aave-buy
+#             2026-06-25-fear-btc-eth-buy
+#             2026-06-24-neutral-all-hold
+title_template: "{date} {fg_label} {signals}"
