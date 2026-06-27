@@ -132,7 +132,7 @@ ORCHESTRATOR (you)
 
 For a deterministic firm-wide feed (not per-ticker, equity feeds only), use [[read-news]]'s `read_news.ts`:
 ```bash
-bun .agents/skills/read-news/scripts/read_news.ts --db .cache/read-news/news.db --days 7 --query "<ticker or theme>" --source ft,wsj
+bun .agents/skills/read-news/scripts/read_news.ts --db .db/news.db --days 7 --query "<ticker or theme>" --source ft,wsj
 ```
 This screener uses the per-ticker Google News search above by design; the read-news pipeline is the fallback when you want aggregated + deduped FT/WSJ events without per-ticker scoping.
 
@@ -212,7 +212,7 @@ advantage of an agent team reading financial journalism.
 
 ### How to read articles (including paywalled sources)
 
-**Use `web_fetch` directly for per-ticker journalism search. For a deterministic firm-wide feed (equity feeds: FT + WSJ), use [[read-news]]'s `read_news.ts`: `bun .agents/skills/read-news/scripts/read_news.ts --db .cache/read-news/news.db --days 7 --query "<ticker or theme>" --source ft,wsj` — returns `{fetched, feeds_ok, unavailable, events}`.**
+**Use `web_fetch` directly for per-ticker journalism search. For a deterministic firm-wide feed (equity feeds: FT + WSJ), use [[read-news]]'s `read_news.ts`: `bun .agents/skills/read-news/scripts/read_news.ts --db .db/news.db --days 7 --query "<ticker or theme>" --source ft,wsj` — returns `{fetched, feeds_ok, unavailable, events}`.**
 
 1. **FT headlines:** `web_fetch "https://news.google.com/rss/search?q=site:ft.com+<topic>+when:7d&hl=en-US&gl=US&ceid=US:en"`
 2. **WSJ headlines:** `web_fetch "https://news.google.com/rss/search?q=site:wsj.com+<topic>+when:7d&hl=en-US&gl=US&ceid=US:en"`
@@ -438,9 +438,6 @@ A finalist that fails G1 AND G2 (i.e., only RSS stubs, no resolved URL, no body 
 AUTOMATICALLY disqualified as a HIGH finalist. It may appear on a watchlist at LOW confidence
 only, with the label `BODY_NOT_REACHED — watch only`.
 In CONVICTION_MODE: a finalist failing G1 AND G2 is KILLED, period. No watchlist slot.
-In RESEARCH_MODE: a finalist failing G1 AND G2 is watchlist-only at LOW and is NOT routed to
-multi-lens-quorum. Only names that PASS the grounding gate (G1+G2) may be routed to quorum; a
-`BODY_NOT_REACHED` name stays on the watchlist until a body source is confirmed in a later pass.
 
 ## Step 5 — Rank, output, and route
 
@@ -487,8 +484,6 @@ Produce this table for every candidate that survived the skeptic filter:
 
 | Ticker | Demand Inflection | Catalyst + When | Non-obvious Why | Already Priced? | Kills It | Confidence | Source (outlet https://url YYYY-MM-DD) |
 |--------|-------------------|-----------------|-----------------|-----------------|----------|------------|----------------------------------------|
-
-Routing constraint (grounding gate): route to multi-lens-quorum ONLY names that passed Step 4.5 (G1+G2). List any `BODY_NOT_REACHED` names under a separate "Watchlist — body not reached" heading; do NOT route them to quorum.
 
 Then a summary: "Routing [tickers] to multi-lens-quorum for buy/wait/late-chase judgment."
 
@@ -617,9 +612,6 @@ Every external claim (news event, data point, quote, analysis) MUST include ALL 
 Format in output: `[TIER] https://exact-url (YYYY-MM-DD) — "verbatim quote"`
 
 **Never write:**
-- An RSS teaser or article headline as the "verbatim quote" — the quote must be from the article body
-  (at least one full sentence of body text, not the <=200-char teaser or headline)
-- A `news.google.com` URL as the resolved source URL — it must be the publisher's direct URL
 - Source name alone (`CoinDesk`, `Bloomberg`) — without URL it is hallucination bait
 - A quote without its URL
 - A URL without a date
@@ -851,7 +843,7 @@ python3 .agents/skills/stocks-trend-screener/scripts/db/research_db.py themes
 python3 .agents/skills/stocks-trend-screener/scripts/db/research_db.py theses
 ```
 
-DB file: `.cache/stocks-trend-screener/articles.db` (persists across sessions, zero cost)
+DB file: `~/.local/share/trend-research/articles.db` (persists across sessions, zero cost)
 
 ### Why SQLite + BM25, not vector DB
 

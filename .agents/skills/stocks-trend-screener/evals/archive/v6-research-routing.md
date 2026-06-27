@@ -132,7 +132,7 @@ ORCHESTRATOR (you)
 
 For a deterministic firm-wide feed (not per-ticker, equity feeds only), use [[read-news]]'s `read_news.ts`:
 ```bash
-bun .agents/skills/read-news/scripts/read_news.ts --db .cache/read-news/news.db --days 7 --query "<ticker or theme>" --source ft,wsj
+bun .agents/skills/read-news/scripts/read_news.ts --db .db/news.db --days 7 --query "<ticker or theme>" --source ft,wsj
 ```
 This screener uses the per-ticker Google News search above by design; the read-news pipeline is the fallback when you want aggregated + deduped FT/WSJ events without per-ticker scoping.
 
@@ -212,7 +212,7 @@ advantage of an agent team reading financial journalism.
 
 ### How to read articles (including paywalled sources)
 
-**Use `web_fetch` directly for per-ticker journalism search. For a deterministic firm-wide feed (equity feeds: FT + WSJ), use [[read-news]]'s `read_news.ts`: `bun .agents/skills/read-news/scripts/read_news.ts --db .cache/read-news/news.db --days 7 --query "<ticker or theme>" --source ft,wsj` — returns `{fetched, feeds_ok, unavailable, events}`.**
+**Use `web_fetch` directly for per-ticker journalism search. For a deterministic firm-wide feed (equity feeds: FT + WSJ), use [[read-news]]'s `read_news.ts`: `bun .agents/skills/read-news/scripts/read_news.ts --db .db/news.db --days 7 --query "<ticker or theme>" --source ft,wsj` — returns `{fetched, feeds_ok, unavailable, events}`.**
 
 1. **FT headlines:** `web_fetch "https://news.google.com/rss/search?q=site:ft.com+<topic>+when:7d&hl=en-US&gl=US&ceid=US:en"`
 2. **WSJ headlines:** `web_fetch "https://news.google.com/rss/search?q=site:wsj.com+<topic>+when:7d&hl=en-US&gl=US&ceid=US:en"`
@@ -617,9 +617,6 @@ Every external claim (news event, data point, quote, analysis) MUST include ALL 
 Format in output: `[TIER] https://exact-url (YYYY-MM-DD) — "verbatim quote"`
 
 **Never write:**
-- An RSS teaser or article headline as the "verbatim quote" — the quote must be from the article body
-  (at least one full sentence of body text, not the <=200-char teaser or headline)
-- A `news.google.com` URL as the resolved source URL — it must be the publisher's direct URL
 - Source name alone (`CoinDesk`, `Bloomberg`) — without URL it is hallucination bait
 - A quote without its URL
 - A URL without a date
@@ -851,7 +848,7 @@ python3 .agents/skills/stocks-trend-screener/scripts/db/research_db.py themes
 python3 .agents/skills/stocks-trend-screener/scripts/db/research_db.py theses
 ```
 
-DB file: `.cache/stocks-trend-screener/articles.db` (persists across sessions, zero cost)
+DB file: `~/.local/share/trend-research/articles.db` (persists across sessions, zero cost)
 
 ### Why SQLite + BM25, not vector DB
 
