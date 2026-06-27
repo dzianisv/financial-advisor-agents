@@ -613,84 +613,106 @@ Invoke the reference-validator skill with this citations JSON:
 
 ## Step 6 — Telegram daily recap (append after both post-hooks)
 
-After Block 3 and citation validation, print a compact Telegram-formatted message for the daily crypto insights channel.
+After Block 3 and citation validation, print the Telegram message for @CryptoAiInvestor.
 
-**Format rules:**
-- One line per token: emoji + ticker + price + RSI + signal
-- 1–2 sentence narrative catalyst **with the source URL inline** — no URL = omit the fact
-- End with a `📎 Sources` section listing every article URL used in the recap (not just Block 3 — every URL that drove a narrative claim in the recap itself)
+**Three mandatory elements per token — every token, no exceptions:**
+
+1. **Market data** — price, RSI, MACD line vs signal, EMA20 vs SMA200 (above/below), % from ATH
+2. **5-seat panel recap** — exactly 1 sentence per seat (on-chain / sentiment / macro / order-flow / narrative) stating what that analyst saw and how they voted
+3. **All source links** — every URL fetched during research for this token, with a 1-line description. If no URL was fetched, write `no sources fetched` — never omit or fabricate
+
+A token entry without all three elements is incomplete. Write them in this order for every token:
+
+```
+{EMOJI} {TOKEN} ${price} | RSI {rsi} | MACD {direction} | {above/below} 4yr avg | {pct}% below ATH
+{SIGNAL_EMOJI} {SIGNAL} — {1-sentence plain-English reason: what the data shows + why it drives this signal}
+
+📊 Analyst panel ({N}/5 bullish):
+  On-chain: {1 sentence — what on-chain data showed, how this seat voted}
+  Sentiment: {1 sentence — RSI, fear/greed, social signal; how this seat voted}
+  Macro: {1 sentence — rates/dollar/risk-regime context; how this seat voted}
+  Order-flow: {1 sentence — volume, MA crossovers, momentum; how this seat voted}
+  Narrative: {1 sentence — key news catalyst; how this seat voted}
+
+📰 Sources:
+  • https://... — {outlet, 1-line description of what it showed}
+  • https://... — ...
+
+📌 {Action note: entry level / stop / what to watch for a reversal}
+```
+
+**Full message wrapper:**
 
 ```
 📊 Daily Crypto Brief — {DATE}
 
-🌡️ Mood: {F&G value} — {classification} ({N}th day)
+🌡️ Fear & Greed: {value} ({classification})
+⚠️ {1-sentence macro regime summary}
 
-📉 Macro: {1–2 sentences on dominant narrative driver. Link the article.}
-[source: https://exact-article-url]
+━━━━━━━━━━━━━━━━━━━━━━
+{token block 1}
+━━━━━━━━━━━━━━━━━━━━━━
+{token block 2}
+...
+━━━━━━━━━━━━━━━━━━━━━━
 
-─────────────────────────────
-💼 PORTFOLIO SIGNALS
-
-{EMOJI} {TOKEN} ${price} | RSI {rsi} | {pct_from_ath}% below all-time high
-{SIGNAL_EMOJI} {SIGNAL} • {1-line plain-English catalyst — what's happening, why it matters}
-📌 {plain-English action note — what to do or watch}
-
-... (repeat per token)
-
-─────────────────────────────
-⚠️ {Risk reminder. Keep 60–70% dry powder if trend is broadly bearish.}
-
-📅 Watch: {next 2–3 macro catalysts with dates}
-
-📎 Sources used in this recap:
-• https://... — {outlet, date, one-line description}
-• https://... — ...
-(List every URL that appears in a [source:] tag above. No URL used in the body = no entry here.)
+📅 Watch: {2–3 upcoming catalysts with dates}
 
 Educational only. Not financial advice. DYOR.
 ```
 
-Concrete example of one token line (this is what it should look like):
+**Concrete example (PUMP SELL and AAVE BUY):**
+
 ```
-🟢 AAVE $92 | RSI 40 | 62% below all-time high
-🟢 BUY • DeFi lending leader — $27B locked, real yield from borrowing spreads, stablecoin (GHO) growing [source: https://defillama.com/protocol/aave]
-📌 Buy in small tranches at $80–95. Stop if it breaks below $75.
+🐸 PUMP $0.00131 | RSI 40 | MACD bearish crossover | below 4yr avg | 85% below ATH
+🔴 SELL — meme launchpad revenue collapsed 77% from peak ($263M → $60M) as speculation dried up; no recovery catalyst; 0 of 5 analysts bullish
 
-⚪ AERO $0.47 | RSI 38 | too new to classify (18 months of history)
-⚪ HOLD • Base chain DEX with real trading fees, but spending more on token rewards than it earns — wait for that to flip
-📌 Watch for emissions to drop below revenue before adding.
+📊 Analyst panel (0/5 bullish):
+  On-chain: protocol revenue $60M Q2'26 vs $263M Q1'25 — structural collapse, voted SELL
+  Sentiment: RSI 40 in downtrend, no oversold bounce signal, voted SELL
+  Macro: risk-off regime hits speculative tokens hardest; no macro tailwind, voted SELL
+  Order-flow: death cross, price below all MAs, no accumulation volume, voted SELL
+  Narrative: no new catalysts; pump.fun losing mindshare; competitors taking share, voted SELL
 
-⚪ TON $1.60 | RSI 35 | 70% below all-time high
-⚪ HOLD • Telegram's blockchain — 900M potential users but legal uncertainty around founder Durov weighs on institutional buyers
-📌 No entry until legal situation resolves.
+📰 Sources:
+  • https://defillama.com/protocol/pump-fun — quarterly revenue data showing -77% collapse
+
+📌 Avoid. If short: near 52w low ($0.001152) — risk of dead-cat bounce; size small.
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+Ⓐ AAVE $92.18 | RSI 40 | MACD flattening | below 4yr avg ($140) | 34% below 4yr avg
+🟢 BUY — DeFi lending leader at deep discount: $27B locked, real yield from borrowing spreads + GHO fees, buy-distribute program live; 3 of 5 analysts bullish
+
+📊 Analyst panel (3/5 bullish):
+  On-chain: $27B TVL dominant, GHO supply growing, fee-switch buybacks confirmed on DeFiLlama, voted BUY
+  Sentiment: RSI 40 recovering from oversold; fear regime = historically good entry for quality DeFi, voted BUY
+  Macro: rate headwinds present but AAVE real yield partially hedges; voted NEUTRAL
+  Order-flow: price below all MAs, no trend reversal yet — caution on size, voted BUY (small)
+  Narrative: no negative catalysts this week; GHO expansion news supportive, voted BUY
+
+📰 Sources:
+  • https://defillama.com/protocol/aave — TVL $27B, protocol revenue confirmed, buy-distribute live
+
+📌 Tranches at $80–95. Max 30% of position at once (Extreme Fear). Stop: $75.
 ```
 
-**⛔ JARGON BAN — Telegram only:** The words `DEEP_VALUE`, `FAIR_VALUE`, `ELEVATED`, `EXTREME`, `UNKNOWN` must NEVER appear in the Telegram message. These are internal analysis codes, not human language. Replace with plain English or drop entirely:
+**⛔ JARGON BAN — these codes must never appear in the Telegram output:**
 
-| Internal code | Plain English for Telegram |
-|---|---|
-| DEEP_VALUE | "-{pct}% from all-time high" (already in `{pct_from_ath}% ATH` — omit zone entirely) |
-| FAIR_VALUE | omit — the signal and price already convey this |
-| ELEVATED | "near cycle high" |
-| EXTREME | "extreme overbought" |
-| UNKNOWN | "limited price history" |
+`DEEP_VALUE`, `FAIR_VALUE`, `ELEVATED`, `EXTREME`, `UNKNOWN`, `BULLISH`, `BEARISH`, `UNCERTAIN`, `SPLIT`, `dominant_zone`, `seats_bull`, `seats_bear`, `quorum_verdict`, `3B/1Br`, `0B/4Br`, `INSUFFICIENT`, `confidence` labels
 
-The `{pct_from_ath}% ATH` field in the per-token line already tells the audience how cheap or expensive the asset is — the zone label is redundant and must be dropped.
+Plain-English replacements:
+- Zone labels → use `{pct}% below ATH` or `{pct}% below 4yr avg` — the number tells the story
+- Seat counts → use `{N} of 5 analysts bullish` in the signal line; the panel block explains each
+- `UNKNOWN` zone → `only {N} months of price history — 4yr average not yet available`
 
-Also banned from Telegram: `quorum_verdict` codes (`BULLISH`, `BEARISH`, `UNCERTAIN`, `SPLIT`), `dominant_zone`, `seats_bull`, `seats_bear`, `confidence` field labels, and any field name from the signal table. Use plain-English equivalents:
-- `BULLISH quorum` → "strong buy case" or omit
-- `BEARISH quorum` → omit (the SELL signal already says it)
-- `3B/1Br` seat counts → omit entirely
-- `RSI 39.8` → keep (this is already human-readable)
+**Telegram length limit is 4096 bytes per message (hard limit).** With full panel + sources, 11 tokens will exceed one message. Split at token boundaries:
+- Part 1: header + BUY/SELL tokens (highest priority — user needs to act on these)
+- Part 2: remaining HOLD tokens + watch list + disclaimer
+- Send each part: `python3 telegram-cli.py send @CryptoAiInvestor "$PART_N"`
+- ⛔ Never use `head -c N` — silently truncates multibyte emoji
 
-**Telegram length limit is 4096 bytes (hard limit).** If the recap exceeds 4096 chars:
-- Split into parts at token boundaries (never mid-token, never mid-line).
-- Append to the FINAL part only: "Educational only. Not financial advice. DYOR."
-- Send each part separately via `telegram-cli send @CryptoAiInvestor "$PART_N"`.
-
-⛔ Never use `head -c 4000` — it can truncate multibyte emojis and silently cut the disclaimer.
-
-**⛔ If a narrative claim has no fetched URL, either drop the claim or replace it with "no specific catalyst" — do NOT state a news fact without a source link.**
+**⛔ If no URL was fetched for a token, write `📰 Sources: none fetched this run` — never fabricate a source.**
 
 ---
 
