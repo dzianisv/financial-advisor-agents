@@ -291,10 +291,95 @@ flowchart TD
 
 ---
 
+## Berkshire Hathaway (Buffett/Munger) — *Permanent Capital + Owner-Operator*
+
+```mermaid
+flowchart TD
+    COC["CIRCLE OF COMPETENCE (Buffett)
+    'Can I explain how this business earns money
+    in 2 sentences? Will that be true in 20 years?'
+    Harder than edge articulation — asks whether
+    you understand the business at all, not just
+    whether you know more than the market
+    Output: IN-CIRCLE / PASS"]
+
+    MOAT["MOAT DURABILITY (Buffett)
+    Name the specific moat:
+    brand · network effect · switching costs ·
+    cost advantage · regulatory licence
+    Test: 'Would this moat survive if the founder died?'
+    Must be 20-yr durable — not a 5-yr technology lead
+    Output: DURABLE / NARROWING / ILLUSORY"]
+
+    MGT["MANAGEMENT QUALITY (Buffett)
+    (a) Are they honest?  (b) Are they capable?
+    Capital allocation track record:
+    buybacks at good prices vs. empire-building
+    Red flags: options grants, acquisition sprees,
+    goodwill impairments
+    Output: HONEST_CAPABLE / CAPABLE_ONLY / PASS"]
+
+    INV["MUNGER INVERSION ('Invert, always invert')
+    Charlie finds the 3 specific ways this fails:
+    competitive threat · regulatory risk · balance-sheet trap
+    — no generics allowed
+    Buffett rebuts each: 'Yes, but...'
+    If Munger names a thesis-ender → PASS
+    Output: 3 failure modes + rebuttals; CLEAR or KILLER_FOUND"]
+
+    MOS["MARGIN OF SAFETY (Graham/Buffett)
+    Intrinsic value via owner earnings, not GAAP EPS
+    10-yr DCF · conservative growth · 8% discount rate
+    'Fair price for a wonderful company' still requires MOS
+    Only buy at ≥ 25% discount to intrinsic value
+    Output: DISCOUNT_PCT
+    (< 25% → WATCH, not BUY)"]
+
+    SIZ["CONVICTION SIZING
+    Passes all 5 → minimum 5% of portfolio
+    No half-positions; Berkshire owns nothing at 0.3%
+    All 5 green + DURABLE moat + discount > 40%
+    → up to 15% of portfolio
+    Output: POSITION_SIZE_PCT + HOLD_FOREVER flag
+    (default: never sell if thesis intact)"]
+
+    PASS_COC["PASS — outside circle"]
+    PASS_MOAT["PASS — moat ILLUSORY"]
+    PASS_MGT["PASS — management DISHONEST"]
+    PASS_INV["PASS — KILLER_FOUND"]
+    WATCH["WATCH — discount < 25%"]
+
+    COC -->|IN-CIRCLE| MOAT
+    COC -->|out of circle| PASS_COC
+    MOAT -->|DURABLE or NARROWING| MGT
+    MOAT -->|ILLUSORY| PASS_MOAT
+    MGT -->|HONEST_CAPABLE| INV
+    MGT -->|CAPABLE_ONLY or DISHONEST| PASS_MGT
+    INV -->|CLEAR| MOS
+    INV -->|KILLER_FOUND| PASS_INV
+    MOS -->|≥ 25% discount| SIZ
+    MOS -->|< 25% discount| WATCH
+
+    style COC fill:#4ecdc4,color:#fff
+    style INV fill:#e74c3c,color:#fff
+    style MOS fill:#f7dc6f,color:#333
+    style SIZ fill:#27ae60,color:#fff
+    style PASS_COC fill:#95a5a6,color:#fff
+    style PASS_MOAT fill:#95a5a6,color:#fff
+    style PASS_MGT fill:#95a5a6,color:#fff
+    style PASS_INV fill:#95a5a6,color:#fff
+    style WATCH fill:#e67e22,color:#fff
+```
+
+**Key principle:** Permanent capital (no redemptions) removes the fund manager's greatest adversary — forced selling. Every other hierarchy faces redemption pressure that can override a correct thesis; Berkshire does not. The Munger Inversion seat is structural adversarialism applied to a single thesis: Charlie's entire job is to find the killer argument, and Buffett must rebut it concretely. The 20-year holding period changes the mathematics entirely — taxes on turnover are a hidden cost that compounds against every other fund.
+
+---
+
 ## Comparison Table
 
 | Fund | Seats | Key Gate | Alpha Source | Kill Mechanism | Speed |
 |---|---|---|---|---|---|
+| **Berkshire** | Moat→Munger→Margin of Safety | Munger Inversion (Charlie finds killer) | 20-yr permanent capital | Never sells / thesis break only | Years–decades |
 | **Bridgewater** | Analyst→Skeptic→CIO→Risk | Skeptic must be rebutted | Idea meritocracy | CIO denies on weak rebuttal | Days |
 | **Tiger** | Analyst→Sector Head→PM | PM sizing = conviction | 5-yr compound thesis | PM exits on thesis break instantly | Days–weeks |
 | **Citadel** | Pod PM→Central Risk→Griffin | Central Risk real-time | Multi-pod diversification | Central Risk intraday force-exit | Minutes–hours |
@@ -309,6 +394,7 @@ flowchart TD
 | Fund | Ease to implement | Unique value it adds | Recommend? |
 |---|---|---|---|
 | Bridgewater | ✅ Already done (23/25) | Adversarial Skeptic | **Default — ship it** |
+| Berkshire | ✅ High | Circle of Competence gate eliminates noise; Munger Inversion is unique adversarialism | **High value — implement** |
 | Point72 | ✅ High | Edge-articulation gate kills weak ideas early | **Next to test** |
 | Tiger | ✅ High | Thesis coherence check + concentration filter | **High value** |
 | Soros | 🟡 Medium | Reflexivity loop (needs market feedback) | Good for macro skill |

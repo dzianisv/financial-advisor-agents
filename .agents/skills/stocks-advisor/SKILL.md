@@ -277,334 +277,47 @@ name does not scale (a 50-80 name book = thousands of MCP calls). So TradingView
 
 ---
 
-## Step 0.85 — Edge Articulation Gate (Cohen mechanism — applies to deep-dive subset only)
+## Step 2 — Decision Hierarchy (pluggable)
 
-Before spawning the full 5-seat panel for a name, state the **EDGE HYPOTHESIS** in one sentence:
-
-> "We believe {TICKER} is mispriced because [specific information or analytical insight] that the market has not yet priced."
-
-Name the edge type:
-- **INFORMATION EDGE** — data point not yet reflected (unreported earnings trend, filing detail, supply-chain signal from a web_fetch source)
-- **ANALYTICAL EDGE** — correct interpretation of public data the consensus has misread (sector rotation, EPS quality, segment mix)
-- **TIMING EDGE** — catalyst visible from feeds but not yet priced (specific date/event ≤ 2 quarters out)
-- **STRUCTURAL EDGE** — index/ETF flow, spinoff, forced-seller, or spread compression creating a temporary mispricing
-
-**Hard gate: if no edge can be stated → skip the full 5-seat panel for this name.** Keep it in the fundamentals-only screen (Step 0.8) and add it to WATCH with note `NO_EDGE — no identifiable information/analytical advantage; pass this run.`
-
-No edge = no deep-dive. This is structural, not advisory. The edge statement goes into the output block header and must be re-checked at the CIO step — if the CIO cannot confirm the edge, PASS is the correct verdict.
-
-> Source: Point72/SAC Capital operating model — "edge articulation" is the mandatory first check before any position research begins; ideas without a named edge are rejected before consuming analytical resources. Prevents narrative-driven trading and forces analysts to commit to WHY before HOW.
-
----
-
-## Step 0.9 — Macro-regime synthesis (run ONCE before the per-stock loop)
-
-Produce a single shared macro-regime paragraph that all seats receive in their data package — the market
-context every per-stock decision is made inside.
-
-**Run the news feeds:**
-```bash
-bun .agents/skills/read-news/scripts/feeds/wsj.ts --feed markets,economy --days 3 --limit 15 --text
-bun .agents/skills/read-news/scripts/feeds/ft.ts  --section markets,global-economy --days 3 --limit 15 --text
-```
-Also fetch `https://finance.yahoo.com/topic/latest-news/` for breadth.
-
-**Produce a 5-sentence macro-regime paragraph** covering exactly these five dimensions, each grounded in a
-specific named fact from the feeds:
-
-```
-MACRO REGIME — {DATE}
-1. Fed/rates: [Fed stance + next meeting expectation + one named data point, e.g. "CME FedWatch: 62% for Sep cut"]
-2. Growth/earnings: [current earnings season signal or GDP read, specific number]
-3. Inflation: [latest CPI/PCE print with date, one sentence]
-4. Geopolitics/exogenous: [the single most market-relevant geopolitical fact this week, named]
-5. Liquidity/risk appetite: [equity market trend + vol signal, e.g. "VIX at 18, Nasdaq -3% week"]
-```
-
-> Source: Howell, *Capital Wars*, Preface — "economic cycles are driven by financial flows, namely quantities of savings and credits, and not by high street inflation or the level of interest rates"; Global Liquidity ($130 trillion pool of footloose capital) is the dominant driver of asset-price booms and busts; Fed/rates matter primarily through their effect on liquidity supply, not through the cost-of-capital channel alone.
-
-**Anti-hallucination rule:** every sentence names a source and a specific, dateable fact — none from memory.
-If a dimension has no data from the feeds this run, write "No live signal for [dimension] this run."
-
-**Inject into every seat's data package** as `macro_regime: "..."` — shared context, identical for all seats,
-not per-seat research.
-
-**Save to run dir:**
-```bash
-echo "$MACRO_REGIME" > "$RUN_DIR/macro_regime.txt"
-```
-
----
-
-## Step 1 — Seed the todo list (one row per ticker)
-
-```sql
-INSERT INTO todos (id, title, description) VALUES
- ('stk-AVGO', 'Analyzing AVGO', 'Pull TradingView D/W + studies, run fundamentals.py, 5-seat panel, decide'),
- ('stk-MRVL', 'Analyzing MRVL', 'idem'),
- ('stk-VRT',  'Analyzing VRT',  'idem');
--- one row per ticker in this run's list
-```
-
-Create the verdict tracker once:
-
-```sql
-CREATE TABLE IF NOT EXISTS stock_analysis (
-  symbol TEXT PRIMARY KEY, company TEXT, theme TEXT, theme_phase TEXT,
-  fundamental TEXT, technical TEXT, narrative TEXT, sentiment TEXT, smartmoney TEXT,
-  decision TEXT, entry_low REAL, entry_high REAL, trigger TEXT,
-  stop REAL, target REAL, conviction INTEGER, status TEXT DEFAULT 'pending');
-```
+The decision chain (how per-stock panel verdicts get turned into a final call) is **pluggable** — load the appropriate module based on the user's `--hierarchy` flag:
 
 ```bash
-# Back-compat: pre-existing 4-seat tables lack the smartmoney column; idempotent — error suppressed if column already exists
-sqlite3 "$DB" 'ALTER TABLE stock_analysis ADD COLUMN smartmoney TEXT;' 2>/dev/null || true
+HIERARCHY="${HIERARCHY_FLAG:-bsc}"   # default: bsc
+HIERARCHY_FILE=".agents/skills/stocks-advisor/references/hierarchies/${HIERARCHY}.md"
+if [[ ! -f "$HIERARCHY_FILE" ]]; then
+  echo "Unknown hierarchy: $HIERARCHY. Available: bsc, bridgewater, berkshire, point72, soros"
+  exit 1
+fi
+# Load and follow the steps in $HIERARCHY_FILE — they replace Steps 2–2.7 entirely
+cat "$HIERARCHY_FILE"
 ```
 
----
+Available hierarchies (see `references/hierarchies/`):
 
-## Step 1.5 — Sequential per-stock loop (orchestrator only; do NOT parallelize the data pull)
-
-Runs ONLY for the deep-dive subset selected in Step 0.8 — names that stayed fundamentals-only never enter
-this loop. Pick the next `pending` todo, `UPDATE todos SET status='in_progress'`, then for that ticker:
-
-**1a. Pull TradingView data (MCP, in this session).** First call `tradingview-chart_get_state` and inspect
-the `studies` list. **Add a study only if its name is NOT already present** — a duplicate pushes a second
-identical series, inflates context, and produces duplicate rows. Required studies (add only if absent):
-**Relative Strength Index**, **Bollinger Bands**, **MACD**. Volume is always present. Do NOT add MA studies
-(length input is ignored — use yfinance MAs).
-
-```
-tradingview-symbol_search    query="{TICKER}"          → resolve NASDAQ:/NYSE: prefix if unknown
-tradingview-chart_get_state                            → inspect studies; dedup before proceeding
-tradingview-chart_set_symbol   symbol="NASDAQ:{TICKER}" (or NYSE:, or bare {TICKER} on failure)
-tradingview-chart_set_timeframe timeframe="D"
-tradingview-data_get_ohlcv     count=365 summary=true  → 52w structure + avg volume
-tradingview-data_get_ohlcv     count=250 summary=false → daily closes for the technical seat
-tradingview-data_get_study_values                       → RSI(14), BB(20,2), MACD, Volume (one each)
-tradingview-chart_set_timeframe timeframe="W"
-tradingview-data_get_ohlcv     count=210 summary=false → weekly closes (long-term structure)
-tradingview-chart_set_timeframe timeframe="D"          → reset to daily
-tradingview-capture_screenshot                          → save; then `view` the file_path to embed inline
-```
-
-**1b. Pull fundamentals (yfinance helper, in this session):**
-```bash
-echo '{"symbol":"{TICKER}","period":"1y"}' > .agents/skills/stocks-advisor/scripts/{TICKER}.json
-/Users/engineer/.venv/bin/python3 .agents/skills/stocks-advisor/scripts/fundamentals.py \
-  .agents/skills/stocks-advisor/scripts/{TICKER}.json
-```
-The helper writes `{TICKER}.json.out.json` with: price, 52w_high/low, ma50, ma200, forward_pe, trailing_pe,
-peg_ratio, revenue_growth, earnings_growth, gross_margin, operating_margin, fcf, market_cap, fcf_yield, roe,
-short_percent, institutional_pct, recommendation_mean, analyst_count, dd_from_52wh, vs_200d_ma, vs_50d_ma.
-Any field yfinance lacks is `null` — never fill a null with a guess.
-
-> Source: Graham, *The Intelligent Investor*, Ch.14 — defensive investor screen: fwdPE ≤ 15 and price-to-book ≤ 1.5; margin of safety is the gap between price and intrinsic value. Lynch, *One Up on Wall Street* — PEG < 1.0 = undervalued growth; FCF yield threshold: Portfolio heuristic — positive FCF is the prerequisite for compounding without dilution. Institutional ownership (`institutional_pct`): Portfolio heuristic derived from 13F flow literature; high institutional concentration signals crowding risk (see conviction rules).
-
-**1c. Assemble the data package** by merging the TradingView study values (RSI, BB, MACD, Volume, 52w hi/lo
-from `summary=true`, the daily/weekly close arrays) with the full `fundamentals.py` JSON. This single package
-is what every seat receives — seats add nothing to it except the narrative seat's fetched news.
-
-> Source: Wilder, *New Concepts in Technical Trading Systems* (1978) — RSI(14) is the original specification; readings < 30 = oversold, > 70 = overbought as sentiment extremes, not automatic reversal signals. Appel (MACD inventor, 1979) — MACD(12,26,9) crossover signals momentum regime change. Bernstein, *Ultimate Day Trader*, Ch.9 — MACD and Momentum are listed as key Trigger tools within the STF framework; use in conjunction with a Setup, never in isolation.
-
-**Cache the data package:**
-```bash
-mkdir -p "$RUN_DIR/{TICKER}"
-python3 -c "
-import json, sys
-pkg = sys.argv[1]
-open('$RUN_DIR/{TICKER}/data_package.json', 'w').write(pkg)
-" "$DATA_PACKAGE_JSON"
-```
-
-**1d. Spawn the 5 seats IN PARALLEL** (task subagents), each with the **same** package injected. Each seat
-reads ONE lens and returns the fixed shape below. Seats share nothing, so they run concurrently.
-
----
-
-## The 5-seat panel (subagent prompts — reuse verbatim, fill the blanks)
-
-> The data package is injected into every seat. Subagents are a **context firewall**: they reason over the
-> package only and never pull MCP/yfinance data. External calls allowed: the **narrative seat** may web_fetch
-> news + run paywall-free feed scripts (`feeds/wsj.ts`/`feeds/ft.ts`); the **smart-money seat** may web_fetch
-> disclosed-flow sources (openinsider.com, 13f.info, EDGAR, capitoltrades.com). All other seats: injected
-> data only.
-
-> Source: Surowiecki, *The Wisdom of Crowds* (2004) — independent assessments from multiple expert perspectives, aggregated without anchoring to each other's views, consistently outperform single-expert forecasts; the 5-seat structure enforces independence by design (seats share data but never see each other's verdicts before returning their own).
-
-| Seat | Lens file (read ONLY this) | Output shape |
+| Name | Key mechanism | Best for |
 |---|---|---|
-| 1 Fundamental | `.agents/skills/fundamental-analysis/SKILL.md` | RATING / KEY METRIC / MOAT / MARGIN OF SAFETY / BLIND SPOT |
-| 2 Technical | `.agents/skills/analyst-technical-analysis/SKILL.md` | STATE / SETUP / TRIGGER / STOP / TARGET / BLIND SPOT |
-| 3 Narrative-Macro | web_fetch + feed scripts (read_news.ts, feeds/wsj.ts, feeds/ft.ts) | PHASE / THEME / SOURCES(≥2 real) / WHY / BLIND SPOT |
-| 4 Sentiment | injected package only | READ / KEY / CONTRARIAN TILT / BLIND SPOT |
-| 5 Smart-Money | web_fetch openinsider/13f.info/EDGAR/capitoltrades | VERDICT / CONVICTION / Form4·13F·13D·PTR / SOURCES |
+| `bsc` (default) | Edge Gate + Skeptic [MEM audit] + P0/P1/P2/P3 | Full portfolio reviews — broadest coverage, highest eval score (25/25) |
+| `bridgewater` | Skeptic → CIO → Risk Manager | Standard equity analysis — strong adversarialism without edge gate overhead |
+| `berkshire` | Circle of Competence → Moat → Munger → Margin of Safety | Long-term concentrated conviction positions only |
+| `point72` | Edge Gate → Conviction → Cohen Seat | Idea-generation / new positions with strong edge hypothesis |
+| `soros` | Macro thesis → Reflexivity → P0/P1/P2/P3 | Macro-driven positions where regime is the primary driver |
 
-**Full subagent prompts — copy verbatim from `references/seat-prompts.md`.** Each seat receives the same
-injected data package; only Seats 3 and 5 may make external calls.
-
-**Cache seat results** — write each seat's output immediately after it returns:
-```bash
-echo '{fundamental_json}'     > "$RUN_DIR/{TICKER}/seat_fundamental.json"
-echo '{technical_json}'       > "$RUN_DIR/{TICKER}/seat_technical.json"
-echo '{narrative_macro_json}' > "$RUN_DIR/{TICKER}/seat_narrative_macro.json"
-echo '{sentiment_json}'       > "$RUN_DIR/{TICKER}/seat_sentiment.json"
-echo '{smart_money_json}'     > "$RUN_DIR/{TICKER}/seat_smart_money.json"
+**Invoking with a specific hierarchy:**
 ```
-Each seat JSON must include at minimum `{verdict, conviction, key_metric, blind_spot, sources:[]}`.
-
-**After all 5 seats return:** proceed to Step 2 (SKEPTIC) → Step 2.5 (CIO SYNTHESIS) → Step 2.7 (RISK
-MANAGER, BUY/ADD only). The per-seat data feeds the Skeptic; Skeptic output feeds the CIO; CIO verdict feeds
-the Risk Manager. The hierarchy is sequential by design — do not skip ahead.
-
-**1e. Persist the seat verdicts and decision:**
-
-After Step 2.7 completes (or Step 2.5 for non-BUY/ADD tickers), the final verdict is available.
-
-```sql
--- Add new columns if not present (idempotent)
-ALTER TABLE stock_analysis ADD COLUMN skeptic TEXT;    -- 2>/dev/null || true
-ALTER TABLE stock_analysis ADD COLUMN cio_memo TEXT;   -- 2>/dev/null || true
-ALTER TABLE stock_analysis ADD COLUMN dissent TEXT;    -- 2>/dev/null || true
-ALTER TABLE stock_analysis ADD COLUMN risk_status TEXT;-- 2>/dev/null || true
-
-UPDATE stock_analysis SET company=?, theme=?, theme_phase=?, fundamental=?, technical=?,
-  narrative=?, sentiment=?, smartmoney=?, skeptic=?, cio_memo=?, dissent=?, risk_status=?,
-  decision=?, entry_low=?, entry_high=?, trigger=?, stop=?, target=?,
-  conviction=?, status='done' WHERE symbol=?;
-UPDATE todos SET status='done' WHERE id='stk-{TICKER}';
+Run stocks-advisor with --hierarchy berkshire on: AAPL, KO, AXP
+```
+or for portfolio review:
+```
+Review my portfolio [sheet URL] using --hierarchy bsc
 ```
 
-**Cache the verdict:**
-```bash
-echo '{verdict_json}' > "$RUN_DIR/{TICKER}/verdict.json"
-# verdict_json = {decision, entry_low, entry_high, trigger, stop, target, conviction, theme,
-#                invalidation[3], dissent, cio_memo, risk_status, risk_position_size}
+**Invoking the comparison mode** (runs all hierarchies on the same input, blind-scored):
 ```
-
-**1f. Repeat** for the next `pending` todo until none remain.
-
-**1g. Write verdict to memory.** After each ticker completes, persist the verdict. This upserts the canonical
-one-line stance (the new verdict overwrites any prior one for this ticker — supersede is enforced here, not
-left to the agent) and appends to the dated episodic log:
-
-```bash
-bun .agents/skills/portfolio-memory/remember.ts \
-  --desk stocks --ticker {TICKER} --verdict {BUY|ADD|WATCH|HOLD|TRIM|EXIT|SKIP} \
-  --date {YYYY-MM-DD} --conviction {N} \
-  --body "{cause-first thesis ≤200 chars}: fundamental {RATING} {KEY_METRIC}; technical {STATE}; narrative {PHASE}; entry {entry_low}-{entry_high}, stop {stop}. Theme {theme}."
+Compare hierarchies on: AAPL, KO — use all
 ```
+→ Routes to the `hierarchy-compare` workflow (see `.claude/workflows/hierarchy-compare.js`).
 
----
-
-## Step 2 — SKEPTIC (subagent — spawn after all 5 seat verdicts for this ticker return)
-
-The analyst panel is the proposal. The Skeptic is the mandatory institutional adversary — assigned, not
-volunteer. It runs on every ticker regardless of how bullish the panel looks. Never skip this step. Spawn
-as a subagent (`/model sonnet /effort high`).
-
-**Skeptic subagent prompt — inject verbatim, fill `{placeholders}`:**
-
-```
-You are the Skeptic for {TICKER}. Your role is mandatory: find the strongest case AGAINST the consensus, even if you privately agree with the analysts.
-
-GAP ANALYSIS: Name the single biggest blind spot across all 5 analyst verdicts — data they had but underweighted, or a dimension none of them checked.
-TAIL RISK: Name one specific, non-generic downside scenario. Assign a probability (1–15%) and the expected loss magnitude if it fires. No generics like "macro deterioration."
-HISTORICAL ANALOG: One real failed trade with a structurally identical setup — same thesis type, same narrative phase, same sentiment read. Exact company, year, outcome. No fabricated cases.
-
-INVALIDATION CONDITIONS (all three required before any BUY advances):
-  (a) {falsifiable condition — a specific price level, ratio, or filing event that proves the thesis wrong}
-  (b) {falsifiable condition 2}
-  (c) {falsifiable condition 3}
-
-PORTFOLIO TAIL STRESS (required — both numbers, no omissions):
-  (a) -30% drawdown in {TICKER}: dollar impact on book at current weight = ${amount} ({weight}% × book × 0.30)
-  (b) -50% worst-case: dollar impact at current + proposed add size = ${amount}
-  State: "At {weight}% of a ${book_size} book, a -30% move costs ${x}; -50% costs ${y}."
-
-CITATION AUDIT — tag every factual claim you make:
-  [LIVE] = verified this run via web_fetch, feed script, fundamentals.py, or TradingView
-  [FILED] = specific SEC filing (name it: 10-Q Q1'26, Form 4 2026-05-15, etc.)
-  [MEM] = training-data recall (undated, not confirmed this run)
-  Rule: if TAIL RISK or HISTORICAL ANALOG rests solely on [MEM] → add ⚠️[MEM-only] flag; CIO must address it in DISSENT LOGGED.
-
-SKEPTIC VERDICT: {SKIP | WATCH | BUY} — {one sentence explaining the controlling factor}
-Inputs: {ALL_5_SEAT_VERDICTS_JSON} | {MACRO_REGIME}
-```
-
-Cache output: `echo '{skeptic_json}' > "$RUN_DIR/{TICKER}/seat_skeptic.json"`
-
----
-
-## Step 2.5 — CIO SYNTHESIS (subagent — spawn after Skeptic returns)
-
-The CIO reads all 5 analyst verdicts plus the Skeptic's challenge and makes the final call. Cannot abstain.
-Spawn as a subagent (`/model sonnet /effort high`). The CIO's verdict replaces the old deterministic table —
-the rules below are the CIO's decision criteria, applied with judgment, not mechanically.
-
-**CIO subagent prompt — inject verbatim, fill `{placeholders}`:**
-
-```
-You are the CIO for {TICKER}. Read all 5 analyst verdicts and the Skeptic challenge. You cannot abstain.
-
-CIRCLE OF COMPETENCE: State in 2 sentences how {TICKER} earns money and why competitors cannot replicate it. If you cannot → FINAL VERDICT: PASS. Stop here.
-SKEPTIC RESPONSE: Address the Skeptic's single strongest argument — rebut with evidence, or accept it and explain why you invest despite it.
-VERDICT (believability-weighted: fundamental/narrative 2×, technical 2×):
-  BUY requires: Fundamental ≥ GOOD, named setup + live bar-close trigger, narrative not LATE/FADING, Sentiment ≠ EXTREME.
-  Holdings path: ADD/HOLD/TRIM/EXIT when cost basis is known (EXIT: POOR/FADING/BROKEN; TRIM: weight>15%/EXTREME/LATE; ADD: BUY gate + room; HOLD: else).
-  Conviction (start 3): +1 ≥3 seats; +1 EARLY+QUIET; −1 CROWDED; −1 PEG>2/neg FCF; −1 LATE; +1 SM-accum (≥2 seats); −1 SM-distrib (caps BUY at 3). Clamp 1–5.
-
-Output exactly:
-FINAL VERDICT: {BUY|WATCH|SKIP}  or {ADD|HOLD|TRIM|EXIT}
-CONVICTION: {1–5}/5
-DISSENT LOGGED: {Skeptic's best objection in one sentence — printed even when overruled}
-CIO MEMO: {1 paragraph: controlling factor, Skeptic right/wrong and why, one fact that would change this call}
-Inputs: {ALL_5_VERDICTS_JSON} | {SKEPTIC_JSON} | {MACRO_REGIME}
-```
-
-> Source: Surowiecki, *Wisdom of Crowds* (2004) — domain-weighted aggregation (believability by demonstrated track record in a specific area) consistently outperforms equal-vote averaging; the CIO weights fundamental/narrative for thesis quality and technical for timing rather than treating all 5 seats as peers. Bridgewater ILC design principle: every open position has a standing institutional adversary; the Skeptic role encodes this structurally so the challenge function cannot collapse when the same voice both proposes and critiques.
-
-**A WATCH verdict is an alert trigger.** Register via the `mkt` skill (see *Set a buy-alert*) with the CIO Memo as the thesis string.
-
-Cache output: `echo '{cio_json}' > "$RUN_DIR/{TICKER}/seat_cio.json"`
-
----
-
-## Step 2.7 — RISK MANAGER CHECK (orchestrator inline — run only when CIO verdict is BUY or ADD)
-
-Skip entirely when CIO verdict is WATCH, SKIP, HOLD, TRIM, EXIT, or PASS. The Risk Manager checks
-portfolio-level constraints only — thesis quality is the CIO's job. Hard rules cannot be overridden by a
-strong thesis. Run this inline (not a subagent) using the portfolio data already loaded.
-
-**Risk Manager check prompt — run inline, fill `{placeholders}`:**
-
-```
-You are the Risk Manager for {TICKER} (CIO: {BUY|ADD}, conviction: {N}/5). Check constraints only — not thesis quality. First breach blocks, no override.
-Rule 1: Position ≥ 10% of book → BLOCKED: "concentration cap — no ADD until trimmed below 8%."
-Rule 2: Primary factor group ≥ 25% of book → BLOCKED: "factor concentration limit."
-Rule 3: Cash < $2,000 → BLOCKED: "insufficient cash for minimum position."
-Rule 4: Conviction ≤ 2/5 → BLOCKED: "below minimum conviction threshold."
-If no rule fires → APPROVED.
-Position size (APPROVED): conviction × 2% × total_book, capped at (10% − current_weight).
-  5/5 → 10% target; 4/5 → 6%; 3/5 → 4%. Subtract current weight for the add size.
-
-Output:
-STATUS: {APPROVED | BLOCKED}
-POSITION SIZE: {$amount, % of book} or "n/a"
-REASON: {rule fired, or "all constraints clear — factor headroom: {pct}%"}
-Portfolio inputs: current_weight={W}%, factor_group={F}, factor_group_weight={FW}%, cash=${CASH}, total_book=${BOOK}
-```
-
-**Verdict flow after Risk Manager:** if APPROVED → CIO verdict stands; if BLOCKED → downgrade to WATCH
-(thesis intact, constraint violated — fix the constraint, then re-run). Log the block reason in the final
-output block so the user knows what to clear.
-
-Cache output: `echo '{risk_json}' > "$RUN_DIR/{TICKER}/seat_risk.json"`
-
-> Source: Citadel operating model (from comparative research) — risk team has operational authority to force position reduction without PM consent; the hard-gate design here encodes this: portfolio-level constraints are enforced by a separate role with veto power, independent of how compelling the thesis is. Carver, *Systematic Trading*, Ch.4 — concentration limits (≤10% single name, ≤25% factor group) are the primary structural protection against idiosyncratic drawdown; stops alone are insufficient.
-
-**Step 2 exit conditions:** after Step 2.7 (or Step 2.5 for non-BUY/ADD verdicts), the final verdict is set.
-Proceed to Step 3. The output format block includes DISSENT LOGGED and RISK STATUS fields (see below).
+After loading $HIERARCHY_FILE, follow its steps exactly. The file contains the full decision chain (subagent prompts, output shapes, hard constraints). Do not improvise or mix steps from different hierarchies.
 
 ---
 
