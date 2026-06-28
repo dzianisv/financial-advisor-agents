@@ -19,39 +19,24 @@ bun portfolio-memory/recall.ts"]
     SHEET["Step 0 · Load Google Sheet (optional)
 gws sheets +read
 ticker, qty, cost_basis, pnl_pct"]
-
+    EDGE["Step 0.85 · Cohen Edge Gate
+Must name edge type:
+INFORMATION / ANALYTICAL / TIMING / STRUCTURAL
+NO_EDGE → fundamentals-only WATCH, skip panel"]
     MACRO["Step 0.9 · Macro-regime synthesis — run ONCE
 feeds/wsj.ts + feeds/ft.ts + Yahoo Finance
-→ 5-sentence paragraph saved to
-   RUN_DIR/macro_regime.txt
-Read by Narrative seat only"]
+→ 5-sentence paragraph · RUN_DIR/macro_regime.txt"]
 
     SEED["Step 1 · Seed ticker queue"]
 
     subgraph SEQ ["Sequential per-ticker loop — one ticker at a time (TradingView single slot)"]
         direction TB
 
-        subgraph SEATS ["5 seats — PARALLEL subagents per ticker"]
+        subgraph SEATS ["Step 2 · 5 investor seats — PARALLEL subagents per ticker"]
             direction LR
 
-            subgraph ST ["Seat 2 · Technical"]
-                direction TB
-                ST_TV["TradingView MCP
-chart_set_symbol
-RSI · MACD · BB · EMA
-OHLCV · Volume · 52w hi/lo
-capture_screenshot"]
-                ST_FY["fundamentals.py
-price · ma50 · ma200 · vs200d"]
-                ST_OUT["SETUP_NAMED
-NO_SETUP
-BROKEN
-+ entry zone · trigger · stop"]
-                ST_TV --> ST_OUT
-                ST_FY --> ST_OUT
-            end
-
-            subgraph SF ["Seat 1 · Fundamental"]
+            subgraph SF ["Seat 1 · Fundamental
+investor-warren-buffett"]
                 direction TB
                 SF_FY["fundamentals.py
 fwdPE · PEG · FCF yield
@@ -65,37 +50,54 @@ FAIR / POOR"]
                 SF_WEB --> SF_OUT
             end
 
-            subgraph SN ["Seat 3 · Narrative"]
+            subgraph ST ["Seat 2 · Technical
+investor-stanley-druckenmiller"]
                 direction TB
-                SN_MR["Read macro_regime.txt"]
+                ST_TV["TradingView MCP
+RSI · MACD · BB · EMA
+OHLCV · 52w hi/lo · screenshot"]
+                ST_FY["fundamentals.py
+ma50 · ma200 · vs200d"]
+                ST_OUT["SETUP_NAMED
+NO_SETUP / BROKEN
++ entry zone · trigger · stop"]
+                ST_TV --> ST_OUT
+                ST_FY --> ST_OUT
+            end
+
+            subgraph SN ["Seat 3 · Narrative / Macro
+investor-lyn-alden"]
+                direction TB
+                SN_MR["Read macro_regime.txt
+fiscal dominance · liquidity cycle"]
                 SN_NEWS["read_news.ts --source ft,wsj
 feeds/wsj.ts · feeds/ft.ts
-web_fetch Bloomberg/Reuters
-Verbatim quotes · No URL = not a source"]
+No URL = not a source"]
                 SN_OUT["EARLY / MID
 LATE / FADING"]
                 SN_MR --> SN_OUT
                 SN_NEWS --> SN_OUT
             end
 
-            subgraph SS ["Seat 4 · Sentiment"]
+            subgraph SS ["Seat 4 · Cycle / Regime
+investor-ray-dalio"]
                 direction TB
                 SS_FY["fundamentals.py
-short_pct · inst_pct · rec_mean"]
+short_pct · inst_pct · rec_mean
+All-Weather quadrant context"]
                 SS_OUT["QUIET_ACCUM
 NEUTRAL · CROWDED
 EXTREME"]
                 SS_FY --> SS_OUT
             end
 
-            subgraph SM ["Seat 5 · Smart-Money"]
+            subgraph SM ["Seat 5 · Smart-Money
+research-smartmoney"]
                 direction TB
                 SM_FETCH["web_fetch per-ticker:
-openinsider.com Form 4 (code P)
-13f.info net adds/trims
-EDGAR SC 13D/13G
-capitoltrades.com PTR
-No URL = not a source"]
+openinsider.com Form 4
+13f.info · EDGAR 13D/13G
+capitoltrades.com PTR"]
                 SM_OUT["ACCUMULATING
 DISTRIBUTING
 NEUTRAL"]
@@ -103,24 +105,37 @@ NEUTRAL"]
             end
         end
 
-        VDT["Verdict
-BUY:   Fund ≥ GOOD + SETUP_NAMED + phase ∈ EARLY/MID + not EXTREME
-WATCH: Fund ≥ GOOD + NO_SETUP
-SKIP:  Fund = POOR | phase ∈ LATE/FADING | BROKEN
-SKIP dominates · Conviction 1–5"]
+        subgraph BSC ["BSC Decision Chain (default hierarchy)"]
+            direction TB
+            SKEP["Step 2.3 · Skeptic
+research-lacy-hunt
+Adversarial challenge · [LIVE]/[FILED]/[MEM] tags
+-30% / -50% tail stress · deflation dissent"]
+            CIO["Step 2.5 · CIO Synthesis
+Weighs 5 seats vs Skeptic
+DISSENT LOGGED even when Skeptic overruled"]
+            RISK["Step 2.7 · Risk Manager
+risk-management
+APPROVED $X (N% book) or BLOCKED
+Required for every BUY / ADD"]
+            SKEP --> CIO --> RISK
+        end
 
         PERSIST["bun portfolio-memory/remember.ts"]
 
-        ST_OUT & SF_OUT & SN_OUT & SS_OUT & SM_OUT --> VDT --> PERSIST
+        SF_OUT & ST_OUT & SN_OUT & SS_OUT & SM_OUT --> SKEP
+        RISK --> PERSIST
     end
 
-    SYNTH["Step 4 · Portfolio-synthesis seat — once after loop
-/model opus /effort xhigh
+    EXEC["Step 3.6 · P0/P1/P2/P3 Execution Table
+Soros format — share counts · entry zones
+triggers · falsification condition per row"]
 
-Reads all per-stock verdicts + holdings + macro_regime.txt
+    SYNTH["Step 4 · Portfolio-synthesis seat — once after loop
+model opus / effort xhigh
 
 1. FACTOR CORRELATION MAP — flag any factor > 25% book
-2. OVER-DIVERSIFICATION CRITIQUE — > 40 names → index noise
+2. OVER-DIVERSIFICATION CRITIQUE — > 40 names = index noise
 3. CROSS-POSITION CONFLICTS — ADD + TRIM on same factor
 4. PORTFOLIO STRUCTURE VERDICT — biggest risk + one action
 5. CASH DEPLOYMENT PRIORITY — top 3 ADD candidates"]
@@ -130,8 +145,8 @@ Ticker · Decision · Conv · Entry · Trigger · Theme"]
     CHAIR[["stock-chair
 sizing · concentration"]]
 
-    USER --> MEM --> SHEET --> MACRO --> SEED --> SEQ
-    PERSIST --> SYNTH --> SIGNAL --> CHAIR
+    USER --> MEM --> SHEET --> EDGE --> MACRO --> SEED --> SEQ
+    PERSIST --> EXEC --> SYNTH --> SIGNAL --> CHAIR
 ```
 
 ## Two input modes
@@ -143,13 +158,32 @@ sizing · concentration"]]
 
 ## The 5 seats
 
-| Seat | Lens | Data source | Output |
-|---|---|---|---|
-| **Fundamental** | FCF yield, PE, PEG, margins, moat — margin of safety at current price? | Injected (yfinance) | STRONG / GOOD / FAIR / POOR |
-| **Technical** (Bernstein STF) | Set-Up → Trigger → Follow-Through. Named setup + bar-close trigger + market-based stop. No trigger = no trade. | Injected (TradingView) | SETUP_NAMED / NO_SETUP / BROKEN |
-| **Narrative / Macro** | Theme phase + macro-regime context. `read_news.ts` for discovery; feed scripts for verbatim citation. No fabrication. | Injected + live news | EARLY / MID / LATE / FADING |
-| **Sentiment** | Contrarian read: short%, institutional%, analyst consensus, RSI extension | Injected (yfinance) | QUIET_ACCUM / NEUTRAL / CROWDED / EXTREME |
-| **Smart-Money** | Disclosed flows: Form 4 (openinsider), 13F (13f.info), 13D (EDGAR), PTR (capitoltrades). ≥2 classes agreeing → verdict. | Live web_fetch | ACCUMULATING / DISTRIBUTING / NEUTRAL |
+Each seat is grounded in a named investor skill from `.agents/skills/`. The skill's SKILL.md and `references/` provide the framework; the seat injects the per-ticker data package and asks the lens to apply its method.
+
+| Seat | Investor skill | Framework | Data source | Output |
+|---|---|---|---|---|
+| **Fundamental** | `investor-warren-buffett` | Moat → owner earnings → margin of safety. FCF yield, PE, PEG, ROE. Circle of competence gate. | Injected — `fundamentals.py` (yfinance) | STRONG / GOOD / FAIR / POOR |
+| **Technical** | `investor-stanley-druckenmiller` | STF: Set-Up → Trigger → Follow-Through. Liquidity + momentum + timing. Named setup + bar-close trigger + market-based stop. No trigger = no trade. | Injected — TradingView MCP | SETUP_NAMED / NO_SETUP / BROKEN |
+| **Narrative / Macro** | `investor-lyn-alden` | Fiscal dominance + broad-money cycle + theme phase. `read_news.ts` for discovery; feed scripts for verbatim citation. No fabrication. | Injected — `macro_regime.txt` + live news | EARLY / MID / LATE / FADING |
+| **Cycle / Regime** | `investor-ray-dalio` | Debt-cycle quadrant (growth/inflation rising/falling). Contrarian positioning read: short%, institutional%, analyst consensus. All-Weather regime context. | Injected — `fundamentals.py` (yfinance) | QUIET_ACCUM / NEUTRAL / CROWDED / EXTREME |
+| **Smart-Money** | `research-smartmoney` | Disclosed institutional flows: Form 4 (openinsider), 13F (13f.info), 13D (EDGAR), PTR (capitoltrades). ≥2 classes agreeing → verdict. | Live `web_fetch` | ACCUMULATING / DISTRIBUTING / NEUTRAL |
+
+**BSC Hierarchy — additional named seats after the 5-seat panel:**
+
+| Role | Skill | Function |
+|---|---|---|
+| **Skeptic** | `research-lacy-hunt` | Deflation / over-indebtedness dissent. Adversarial challenge of every thesis before CIO decides. Tags every unverified claim `[MEM]`. |
+| **CIO** | BSC Hybrid logic | Weighs 5-seat panel + Skeptic. DISSENT LOGGED even when Skeptic is overruled. |
+| **Risk Manager** | `risk-management` | APPROVED / BLOCKED per BUY/ADD. Dollar amount, % book, position limit enforcement. |
+
+**Optional extended panel (skills available, not wired by default):**
+
+| Skill | When to add |
+|---|---|
+| `investor-benjamin-graham` | Deep-value screens — sub-book or net-net candidates where strict quantitative gates apply |
+| `research-michael-pettis` | International / EM names — global trade imbalances, China exposure, FX flow lens |
+| `research-russell-napier` | Financial repression plays — forced-savers, regulated capital, long-duration sovereign debt |
+| `research-morgan-housel` | Behavioral guardrail — non-voting, flags recency bias and sizing psychology |
 
 ## Step 0.9 — Macro-regime synthesis
 

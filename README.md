@@ -57,6 +57,79 @@ Two tiers run on any backend. FAST catches same-day setups; SLOW produces a week
 
 ---
 
+## stocks-advisor — pluggable decision hierarchy
+
+The `stocks-advisor` skill runs a 5-seat analyst panel (fundamental / technical / narrative-macro / sentiment / smart-money) per stock, then routes through a **pluggable decision hierarchy** that replaces the default committee with a named hedge-fund decision chain.
+
+Invoke with `--hierarchy <name>`. Default is `bsc` (best eval score). All 8 hierarchies are blind-scored /25 against the same IBKR portfolio input (85 positions, $578k equity, COIN 21.5%):
+
+| Rank | Hierarchy | Key mechanism | Score |
+|:----:|:----------|:--------------|:-----:|
+| 1 | `bsc` ← **default** | Edge Gate + Skeptic [MEM audit] + P0/P1/P2/P3 | **25/25** |
+| 2 | `bridgewater` | Skeptic → CIO → Risk Manager | 23/25 |
+| 3 | `soros` | Macro thesis → Reflexivity → P0/P1/P2/P3 | 21/25 |
+| 4 | `berkshire` | Circle of Competence → Moat → Munger Inversion | 20/25 |
+| 4 | `millennium` | PM thesis → Automated Hard Stop (Kelly, no override) | 20/25 |
+| 6 | `citadel` | Pod PM → Central Risk (bidirectional) → Griffin | 19/25 |
+| 6 | `point72` | Edge Gate → Conviction → Cohen Seat | 19/25 |
+| 8 | `tiger` | Variant perception → Adversarial pitch → sole authority | 15/25 |
+
+**Why BSC Hybrid wins:** combines Bridgewater's mandatory Skeptic seat (adversarial challenge before every CIO decision), Soros's P0/P1/P2/P3 execution table (share counts + falsification conditions per row), and Cohen's Edge Gate (information / analytical / timing / structural edge must be named before deep-dive — no edge = fundamentals-only WATCH). Also adds [LIVE]/[FILED]/[MEM] citation tagging on all Skeptic factual claims to close the data-grounding ceiling shared by all lower-scoring architectures.
+
+**Why Tiger scores lowest on a diversified portfolio:** Tiger's decision chain is designed for 15–20 name concentrated long/short books. On an 85-position book it identifies variant-perception ideas but cannot reason across positions holistically.
+
+**Run with a specific hierarchy:**
+```
+Run stocks-advisor with --hierarchy bridgewater on: AAPL, KO, AXP
+Review my portfolio [sheet URL] using --hierarchy bsc
+Compare hierarchies on: AAPL, KO — use all        # → routes to hierarchy-compare workflow
+```
+
+Hierarchy files: `.agents/skills/stocks-advisor/references/hierarchies/`
+Eval workflow: `.claude/workflows/hierarchy-compare.js`
+
+```
+BSC Hybrid decision chain (6 steps):
+
+  ┌─────────────────────────────────────────────────────────┐
+  │ Step 0.85  COHEN EDGE GATE                              │
+  │            Name edge type: INFO / ANALYTICAL /          │
+  │            TIMING / STRUCTURAL — or NO_EDGE → skip      │
+  └──────────────────────┬──────────────────────────────────┘
+                         │
+  ┌──────────────────────▼──────────────────────────────────┐
+  │ Step 1     5-SEAT PANEL (parallel)                      │
+  │            Fundamental · Technical · Narrative ·        │
+  │            Sentiment · Smart-money                      │
+  └──────────────────────┬──────────────────────────────────┘
+                         │
+  ┌──────────────────────▼──────────────────────────────────┐
+  │ Step 2     SKEPTIC SEAT  [MEM-audit]                    │
+  │            Adversarial challenge · [LIVE]/[FILED]/[MEM] │
+  │            tags · -30%/-50% tail stress                 │
+  └──────────────────────┬──────────────────────────────────┘
+                         │
+  ┌──────────────────────▼──────────────────────────────────┐
+  │ Step 2.5   CIO SYNTHESIS                                │
+  │            Weighs panel vs Skeptic · DISSENT LOGGED     │
+  │            even when Skeptic overruled                  │
+  └──────────────────────┬──────────────────────────────────┘
+                         │
+  ┌──────────────────────▼──────────────────────────────────┐
+  │ Step 2.7   RISK MANAGER GATE                            │
+  │            APPROVED $X (N% book) or BLOCKED: reason     │
+  │            Required for every BUY / ADD verdict         │
+  └──────────────────────┬──────────────────────────────────┘
+                         │
+  ┌──────────────────────▼──────────────────────────────────┐
+  │ Step 3.6   P0/P1/P2/P3 EXECUTION TABLE (Soros format)  │
+  │            Share counts · entry zones · triggers ·      │
+  │            falsification condition per row              │
+  └─────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## research-market pipeline
 
 > Source: [`.agents/workflows/research-market.workflow.js`](.agents/workflows/research-market.workflow.js)

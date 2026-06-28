@@ -285,22 +285,25 @@ The decision chain (how per-stock panel verdicts get turned into a final call) i
 HIERARCHY="${HIERARCHY_FLAG:-bsc}"   # default: bsc
 HIERARCHY_FILE=".agents/skills/stocks-advisor/references/hierarchies/${HIERARCHY}.md"
 if [[ ! -f "$HIERARCHY_FILE" ]]; then
-  echo "Unknown hierarchy: $HIERARCHY. Available: bsc, bridgewater, berkshire, point72, soros"
+  echo "Unknown hierarchy: $HIERARCHY. Available: bsc, bridgewater, berkshire, citadel, millennium, point72, soros"
   exit 1
 fi
 # Load and follow the steps in $HIERARCHY_FILE — they replace Steps 2–2.7 entirely
 cat "$HIERARCHY_FILE"
 ```
 
-Available hierarchies (see `references/hierarchies/`):
+Available hierarchies (see `references/hierarchies/`). Scores from blind eval on 85-position IBKR portfolio ($578k equity, COIN 21.5%):
 
-| Name | Key mechanism | Best for |
-|---|---|---|
-| `bsc` (default) | Edge Gate + Skeptic [MEM audit] + P0/P1/P2/P3 | Full portfolio reviews — broadest coverage, highest eval score (25/25) |
-| `bridgewater` | Skeptic → CIO → Risk Manager | Standard equity analysis — strong adversarialism without edge gate overhead |
-| `berkshire` | Circle of Competence → Moat → Munger → Margin of Safety | Long-term concentrated conviction positions only |
-| `point72` | Edge Gate → Conviction → Cohen Seat | Idea-generation / new positions with strong edge hypothesis |
-| `soros` | Macro thesis → Reflexivity → P0/P1/P2/P3 | Macro-driven positions where regime is the primary driver |
+| Name | Key mechanism | Eval score | Best for |
+|---|---|---|---|
+| `bsc` (default) | Edge Gate + Skeptic [MEM audit] + P0/P1/P2/P3 | **25/25** | Full portfolio reviews — broadest coverage |
+| `bridgewater` | Skeptic → CIO → Risk Manager | 23/25 | Standard equity analysis — strong adversarialism without edge gate overhead |
+| `soros` | Macro thesis → Reflexivity → P0/P1/P2/P3 | 21/25 | Macro-driven positions where regime is the primary driver |
+| `berkshire` | Circle of Competence → Moat → Munger → Margin of Safety | 20/25 | Long-term concentrated conviction positions only |
+| `millennium` | PM thesis → Auto Hard Stop (Kelly-based, no override) | 20/25 | Risk-first portfolio triage — automated de-risking on breach |
+| `citadel` | Pod PM → Central Risk (bidirectional, no PM recourse) → Griffin | 19/25 | Multi-strategy books with strict factor concentration limits |
+| `point72` | Edge Gate → Conviction → Cohen Seat | 19/25 | Idea-generation / new positions with strong edge hypothesis |
+| `tiger` | Variant perception → Adversarial pitch → Robertson sole authority | 15/25 | Concentrated 15–20 name long/short books only — not suitable for diversified portfolios |
 
 **Invoking with a specific hierarchy:**
 ```
