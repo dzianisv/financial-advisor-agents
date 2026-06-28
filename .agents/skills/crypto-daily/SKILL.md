@@ -94,104 +94,105 @@ If the Telegram recap section is missing from the report, construct it per the `
 
 ---
 
-## Step 2 — Create Notion page via Notion MCP
+## Step 2 — Create full Notion report via Notion MCP
 
-**Use the Notion MCP tools directly** — no script needed, no NOTION_TOKEN env var.
+Post the **complete per-token analyst report** (all 11 tokens × 5 seats + DeFiLlama data + news references) as a Notion page. This becomes the canonical URL that Telegram links to — the Telegram message itself stays short.
 
 **2a. Read the Notion target from config** (STOP if missing or empty):
 ```bash
 NOTION_CONFIG=".cache/crypto-daily/notion.yaml"
-if [ ! -f "$NOTION_CONFIG" ]; then
-  echo "ERROR: $NOTION_CONFIG not found. Create it with a page_id field before running /crypto-daily." >&2
-  exit 1
-fi
 NOTION_PARENT_PAGE_ID=$(grep '^page_id:' "$NOTION_CONFIG" | sed -E 's/.*"([a-f0-9]+)".*/\1/')
-if [ -z "$NOTION_PARENT_PAGE_ID" ]; then
-  echo "ERROR: page_id is empty in $NOTION_CONFIG. Set it to the 32-char hex Notion page id." >&2
-  exit 1
-fi
+[ -z "$NOTION_PARENT_PAGE_ID" ] && echo "ERROR: page_id empty in $NOTION_CONFIG" && exit 1
 ```
 
-**2b. Create the page** (empty, under the configured parent):
-```
-notion-API-post-page
-  parent: {"page_id": "{NOTION_PARENT_PAGE_ID}"}
-  properties: {"title": {"title": [{"type":"text","text":{"content":"📊 Crypto Daily — {TODAY}"}}]}}
-  children: []
-```
-Save the returned `id` as `PAGE_ID`.
+**2b. Build the full report content** from the run report file.
 
-**2c. Convert the report to Notion blocks** — parse the Markdown line by line:
-- `# heading` → `heading_1` block
-- `## heading` → `heading_2` block  
-- `### heading` → `heading_3` block
-- `- bullet` → `bulleted_list_item` block
-- ` ``` ` fence → `code` block (language from fence tag)
-- `---` → `divider` block
-- everything else → `paragraph` block
-- Strip Markdown bold/links from paragraph text (Notion rich_text doesn't parse inline Markdown)
-- Chunk text to ≤ 2000 chars per `rich_text` object (Notion API hard limit)
+The Notion page MUST include (in order):
+1. Signal table with price/RSI/zone/signal for all tokens
+2. Portfolio governor decision (F&G regime → max buy count → top picks)
+3. For EACH token: price, all MAs (EMA20/SMA50/SMA200/200wMA), death cross, RSI, MACD, then 5 seats (one sentence each with POSTURE label), bull/bear case, news references
+4. News reference list at the bottom (numbered [¹][²]... matching inline citations in token sections)
 
-**2d. Append blocks in batches of 50** using `notion-API-patch-block-children`:
+**Reference formatting rule (applies to BOTH Notion and Telegram):**  
+Do NOT embed raw URLs inline. Use numbered footnote-style references:
+- Inline: "ETF outflows $1.79B [¹]" or "DTCC selected Chainlink [³]"
+- Footer: `[¹] theblock.co/post/406451 — IBIT 2nd worst outflow week`  
+This keeps text readable and compact.
+
+**2c. Create page with full Notion Markdown content:**
 ```
-notion-API-patch-block-children
-  block_id: {PAGE_ID}
-  children: [{batch of ≤50 block objects}]
+mcp__claude_ai_Notion__notion-create-pages
+  parent: {"type": "page_id", "page_id": "{NOTION_PARENT_PAGE_ID}"}
+  pages: [{"properties": {"title": "📊 Crypto Daily — {TODAY}"},
+           "icon": "📊",
+           "content": "{FULL_REPORT_MARKDOWN}"}]
 ```
-Repeat until all blocks are appended.
+Save the returned `id` as `PAGE_ID` and `url` as `NOTION_PAGE_URL`.
+
+**2d. Share the page publicly** — the Notion page URL from creation is workspace-scoped by default. To make it web-accessible:
+- The MCP does not expose a "Share to web" toggle directly.
+- The canonical public URL format is: `https://www.notion.so/{PAGE_ID_no_hyphens}`
+- If the workspace has "Share to web" enabled by default, this URL is immediately shareable.
+- If not: open the page in Notion → Share → "Share to web" → enable. Then use the public URL.
+- Save the public URL as `NOTION_PUBLIC_URL`.
 
 **2e. Print the page URL:**
 ```
-✅ Notion page: https://app.notion.com/p/Crypto-Daily-{TODAY}-{PAGE_ID_no_hyphens}
+✅ Notion page (public): {NOTION_PUBLIC_URL}
 ```
-
-> **Why MCP, not a script:** `notion-API-post-page` and `notion-API-patch-block-children` are available as native tools in this session. No subprocess, no token management, no dependency on Python or the `requests` library. The MCP handles auth transparently.
 
 ---
 
-## Step 3 — Post to Telegram channel via telegram-cli skill
+## Step 3 — Post ONE Telegram message with Notion link
 
-**Invoke the `telegram-cli` skill**, then send the daily recap to @CryptoAiInvestor.
+**⛔ SINGLE MESSAGE RULE:** Send exactly ONE Telegram message per run. All per-token detail lives in Notion. The Telegram post links to the Notion page — it does NOT repeat per-token analysis inline. Multiple messages with different token analyses create inconsistency and confusion.
 
-**3a. Extract the recap from the report:**
-```bash
-RECAP=$(python3 - << 'PY'
-import re, sys
-content = open("research/crypto-portfolio-$(date +%F).md").read()
-# Extract the block between the telegram recap backtick fences
-m = re.search(r'```\n(📊 Daily Crypto Brief.*?)```', content, re.DOTALL)
-print(m.group(1).strip() if m else "")
-PY
-)
+**3a. Build the single recap message:**
 
-# Telegram hard limit is 4096 chars — trim if needed
-RECAP=$(echo "$RECAP" | head -c 4000)
 ```
+📊 Crypto Daily — {TODAY} | F&G {VALUE} {EMOJI} {LABEL}
+
+{SIGNAL TABLE — compact, one token per line, format: EMOJI TICKER $PRICE — SIGNAL}
+
+🔴 HOLD:             {space-separated tokens, e.g. BTC · PUMP}
+🟡 BUY(small) WATCH: {governor-downgraded tokens, e.g. ETH · SOL · LINK}
+⭐ BUY(small) ACTIVE: {top N governor picks WITH price, e.g. AERO $0.47 · JUP $0.22 · HYPE $62}
+
+⚙️ Governor: F&G {VALUE} → max {N} active buys
+{1-line macro context, e.g. "ETF -$1.79B week — Warsh hawkish, debasement trade unwinding"}
+
+📋 Full analyst report (5 seats · DeFiLlama · news sources):
+{NOTION_PUBLIC_URL}
+
+DYOR. Educational only. Not financial advice. #Bitcoin #DeFi #Crypto
+```
+
+Rules:
+- Signal table: one line per token — format exactly `EMOJI TICKER $PRICE — SIGNAL`
+- Group summary: three lines — HOLD / BUY(small) WATCH / BUY(small) ACTIVE. **Never shorten labels** (🟡 WATCH: is wrong; must be 🟡 BUY(small) WATCH:)
+- **ACTIVE line MUST include price for every token** — `AERO $0.47 · JUP $0.22 · HYPE $62` not just tickers. This is the only actionable line; price is mandatory.
+- Macro context: ONE sentence max — the single most important driver today
+- No raw URLs inline — the Notion link is the ONLY URL in the message
+- Total message ≤ 4096 chars (verify: `echo -n "$RECAP" | wc -c`)
 
 **3b. Send via telegram-cli:**
 ```bash
 TELEGRAM_CLI=~/.agents/skills/telegram-cli/telegram-cli.py
-
 python3 "$TELEGRAM_CLI" send @CryptoAiInvestor "$RECAP"
 ```
 
 **3c. Verify delivery:**
 ```bash
-# Read the last message to confirm it arrived
 python3 "$TELEGRAM_CLI" read @CryptoAiInvestor --limit 1
 ```
-
-Expected output: the sent message appears as the most recent message.
+The sent message appears as the most recent message. Confirm the Notion URL is live before sending.
 
 **Error handling:**
 | Error | Fix |
 |---|---|
 | `session not authenticated` | `python3 "$TELEGRAM_CLI" login` |
-| `ChatWriteForbiddenError` | Account must be admin of @CryptoAiInvestor — add via Telegram app → channel info → Administrators |
-| `UsernameNotOccupiedError` | Channel username changed — confirm the correct handle |
-| Recap empty | Check report file exists and contains `📊 Daily Crypto Brief` block |
-
-> ⚠️ telegram-cli uses your **personal** Telegram account (Telethon session at `~/.config/telethon/`). The account must be a channel admin to post. Check admin status first if the send fails.
+| `ChatWriteForbiddenError` | Account must be admin of @CryptoAiInvestor |
+| Notion URL not accessible | Enable "Share to web" in Notion before sending |
 
 ---
 
