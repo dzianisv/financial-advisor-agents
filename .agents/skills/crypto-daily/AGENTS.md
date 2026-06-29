@@ -1,87 +1,137 @@
-# crypto-daily — Agent Contract
+# crypto-daily — Modification Guide for Agents
 
-This file is read automatically by any agent that edits this skill.
-Read it fully before changing SKILL.md.
+> Read this file completely before editing SKILL.md. It is the contract between the skill and its users.
+> Any modification that breaks the validation checklist at the bottom is **rejected** — revert and fix.
 
 ---
 
-## What this skill does
+## What this skill produces
 
-Publishes the daily crypto-advisor run to three channels:
-1. **Notion** — full analyst report (Block 1 + Block 2 with researcher recaps + Block 3 sources)
-2. **Telegram** (@CryptoAiInvestor) — per-token recap with 5 researcher lines each
+Three outputs per daily run:
+1. **Notion** — full analyst report (signal table + per-token Block 2 with researcher recaps + Block 3 sources)
+2. **Telegram** (@CryptoAiInvestor) — multi-part messages, one per-token block each
 3. **X.com** — ≤280 char tweet summary
 
 ---
 
-## Telegram format contract — DO NOT simplify without explicit user approval
+## How to modify this skill
 
-The Telegram output is the primary user-facing product. The format was deliberately designed after several regressions. **Do not collapse, shorten, or remove researcher lines.**
+### Allowed changes (no special approval needed)
+- Fix broken bash commands or CLI flags
+- Update Notion MCP tool names if they change
+- Fix telegram-cli invocation flags
+- Improve clarity of instructions without changing output format
+- Add error-handling steps
 
-### Per-token block (mandatory, all 5 lines always present)
+### Changes that require preserving the Telegram format contract
+- Any edit to Step 3 (Telegram) must keep the per-token block structure intact (see contract below)
+- You may add content but may NOT remove or collapse the 5 researcher lines per token
+- You may reorder sections within a part but may NOT merge parts or reduce to a single message
+
+### Changes that require explicit user approval before committing
+- Removing any of the 5 researcher lines (Technical / On-Chain / DeFi / Macro / Smart Money)
+- Changing signal emoji mapping (🟢/🟡/🔴)
+- Switching back to a single-message format
+- Renaming researcher labels
+- Moving the Notion link out of the final part
+
+---
+
+## Telegram format contract
+
+The Telegram output is the primary user-facing product. It was deliberately designed after multiple regressions where the signal was shown but the reasoning was not. **Every token must show WHY, not just WHAT.**
+
+### Per-token block — exact structure, mandatory
 
 ```
 {SIGNAL_EMOJI} {TICKER} ${PRICE} — {SIGNAL}
-  📈 Technical:   {1 sentence — key chart indicator (plain explanation in parens)}
+  📈 Technical:   {1 sentence — chart indicator (plain explanation in parens)}
   ⛓ On-Chain:    {1 sentence — on-chain metric (plain explanation in parens)}
   🏛 DeFi:        {1 sentence — protocol revenue/TVL (plain explanation in parens); or "n/a — base layer asset"}
   🌍 Macro:       {1 sentence — macro driver (plain explanation in parens)}
   🐋 Smart Money: {1 sentence — exchange flows/whale activity (plain explanation in parens)}
 ```
 
-### Signal emoji rules (hard)
+All 5 lines are mandatory for every token. If a researcher had no data, write `no data this run` — never omit the line.
 
-| Signal | Emoji | Notes |
-|---|---|---|
-| BUY / BUY(small) | 🟢 | |
-| HOLD / WATCH / gov-downgraded | 🟡 | **Never use 🔴 for HOLD** |
-| SELL | 🔴 | Red is SELL only |
+### Signal emoji — hard rule
 
-### Language rules (hard)
-
-- **Keep technical terms** (RSI, death cross, MACD, EMA, TVL, etc.) — do not rename them
-- **Every jargon term must be followed by a plain-English explanation in `()`** — write for someone who doesn't know crypto
-- **No internal code words** in Telegram output: `DEEP_VALUE`, `FAIR_VALUE`, `BULLISH`, `BEARISH`, `UNCERTAIN`, `seats_bull`, `quorum_verdict`, etc. — translate to plain English
-- Use concrete numbers ($, %, timeframes) over adjectives
-
-### Multi-part message split
-
-11 tokens × 5 researcher lines exceeds 4096 bytes. Split order:
-- **Part 1**: header + BUY/BUY(small) active tokens (highest conviction first)
-- **Part 2**: HOLD gov-cap tokens (downgraded BUYs)
-- **Part 3**: remaining HOLDs + group summary + governor note + Notion link + disclaimer
-
-Each part must be ≤ 4096 bytes. Verify: `echo -n "$PART" | wc -c`
-
----
-
-## Notion format contract
-
-The Notion page is the full report. It must include:
-1. Signal table (all 11 tokens, one row each)
-2. Block 2 per token: verdict narrative + Research Desk recap (5 researcher lines) + panel votes (5 investor lines) + bull/bear cases
-3. Block 3: all research sources with T1/T2/T3 ranking
-
----
-
-## Key design decisions (do not revert)
-
-| Decision | Reason |
+| Signal | Emoji |
 |---|---|
-| 5 researcher lines per token in Telegram | Users need to see WHY, not just the signal. A bare "HOLD BTC" with no reasoning is useless. |
-| 🟡 for HOLD | Red signals danger/sell. HOLD is neutral. Yellow avoids false alarm. |
-| Jargon + `(plain explanation)` | Keeps the precision of the technical term while making it accessible. Fully plain English loses credibility; fully jargon loses audience. |
-| Multi-part messages | Telegram 4096-byte limit. BUY tokens sent first because readers act on those. |
-| Researcher names kept (Technical/On-Chain/DeFi/Macro/Smart Money) | These map to the 5 Research Desk agents. Renaming them (e.g. to "Chart"/"Flows") breaks the correspondence and confuses readers who look up the full Notion report. |
-| Notion link at end of final message only | One URL, one place. Prevents link spam. |
+| BUY / BUY(small) active | 🟢 |
+| HOLD / WATCH / gov-downgraded BUY | 🟡 |
+| SELL | 🔴 |
+
+🔴 means SELL. Never use it for HOLD. This confused readers and was explicitly corrected.
+
+### Language rules — hard
+
+- **Keep the technical term** (RSI, death cross, MACD, EMA20, TVL, MVRV-Z…) — do not rename or drop it
+- **Follow every jargon term with `(plain English explanation)`** — e.g. `RSI 30 (oversold — near historical buy zone)`
+- **Ban from Telegram output**: `DEEP_VALUE`, `FAIR_VALUE`, `ELEVATED`, `EXTREME`, `BULLISH`, `BEARISH`, `UNCERTAIN`, `SPLIT`, `seats_bull`, `seats_bear`, `quorum_verdict`, `0B/4Br`, `INSUFFICIENT` — translate these to plain English
+- Use numbers ($, %, timeframes) over adjectives
+
+### Multi-part split — required
+
+11 tokens × 5 lines each exceeds 4096 bytes. Always split:
+- **Part 1**: header + macro context + BUY/BUY(small) active tokens
+- **Part 2**: gov-downgraded HOLD tokens (would be BUY in normal regime)
+- **Part 3**: remaining HOLDs + group summary + Notion link + disclaimer
+
+Notion link goes in Part 3 only. No raw URLs in Parts 1 or 2.
 
 ---
 
-## Regression history (do not repeat)
+## Validation checklist — run before every commit to SKILL.md
 
-- **2026-06-28**: `b1cd3e9` refactor decoupled Research Desk from output. Investment Panel votes appeared in Block 2 but researcher briefs were silently dropped. Telegram had zero reasoning. Fixed in `3bf7760` + `bd26185`.
-- **Single-message rule** was removed because 11 tokens × 5 researcher lines cannot fit in 4096 bytes. Do not reinstate it.
-- Researcher line labels were briefly renamed to "Chart/Value/Protocol/Market/Flows" — reverted. Keep original names.
+An edit to SKILL.md is only complete when ALL of these pass. Check each one explicitly:
+
+```
+[ ] 1. TOKEN BLOCK STRUCTURE
+        grep the Telegram section: does every token block have exactly 5 indented lines?
+        Labels present: "Technical:", "On-Chain:", "DeFi:", "Macro:", "Smart Money:"
+
+[ ] 2. SIGNAL EMOJI
+        grep for 🔴.*HOLD — must return 0 matches
+        HOLD/WATCH/gov-cap tokens use 🟡 only
+
+[ ] 3. JARGON BAN
+        grep Telegram section for: DEEP_VALUE FAIR_VALUE BULLISH BEARISH UNCERTAIN SPLIT
+        Must return 0 matches
+
+[ ] 4. PARENS RULE
+        Each researcher line in the example must contain at least one (...) explanation
+        e.g. "RSI 30 (oversold)" — not "RSI 30"
+
+[ ] 5. MULTI-PART SPLIT
+        Skill still instructs splitting into 3 parts
+        Part 3 is where the Notion link appears
+        No instruction to send a single message
+
+[ ] 6. RESEARCHER LABELS UNCHANGED
+        Labels must be exactly: Technical / On-Chain / DeFi / Macro / Smart Money
+        Not renamed to Chart / Value / Protocol / Market / Flows or anything else
+
+[ ] 7. NO RESEARCHER LINE COLLAPSE
+        Skill does not say "summarise the 5 seats in one line" or equivalent
+        Each seat gets its own line
+
+[ ] 8. NOTION LINK NOT HARDCODED
+        Notion parent page ID must be read from .cache/crypto-daily/notion.yaml at runtime
+        Not hardcoded anywhere in SKILL.md
+```
+
+If any check fails → fix before committing. Do not merge a SKILL.md that fails this checklist.
+
+---
+
+## Regression history — do not repeat
+
+| Date | What broke | Cause | Fix |
+|---|---|---|---|
+| 2026-06-28 | Telegram had zero reasoning ("HOLD BTC" with no why) | `b1cd3e9` refactor dropped Research Desk briefs from output | `bd26185` added 5-researcher lines to Telegram |
+| 2026-06-28 | Researcher labels renamed to Chart/Value/Protocol/Market/Flows | Attempted "plain English" renaming | `fa5eab1` reverted — keep names, add `()` explanations instead |
+| pre-2026-06-28 | Single-message rule led to truncated output | 11 tokens can't fit in 4096 bytes | Removed single-message rule; split into 3 parts |
 
 ---
 
@@ -89,6 +139,7 @@ The Notion page is the full report. It must include:
 
 | Path | Purpose |
 |---|---|
-| `.agents/skills/crypto-daily/SKILL.md` | Agent instructions |
-| `.cache/crypto-daily/notion.yaml` | Notion target page (runtime config, never hardcode) |
+| `.agents/skills/crypto-daily/SKILL.md` | Agent instructions (this is what you edit) |
+| `.agents/skills/crypto-daily/AGENTS.md` | This file — modification contract |
+| `.cache/crypto-daily/notion.yaml` | Notion target page (runtime, never hardcode) |
 | `.cache/crypto-daily/portfolio.csv` | Optional token universe override |
