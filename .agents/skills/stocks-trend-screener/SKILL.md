@@ -1,6 +1,6 @@
 ---
 name: stocks-trend-screener
-description: Screens for high-conviction growth stocks using price momentum pre-screen + financial journalism + model reasoning. Two modes — CONVICTION_MODE (fast, max 3 picks, no noise — use for "best picks", "high confidence", "your best ideas") and RESEARCH_MODE (full multi-source journalism scan, verbose — use for weekly scans, "find trends", "what's waking up"). Feed stack: FT + WSJ via Google News RSS proxy (web_fetch, verified working), Bloomberg via Google News proxy, Reuters/BI via broad Google News search. Never auto-trades. Educational, not advice.
+description: "Screens for high-conviction growth stocks using price momentum pre-screen + financial journalism + model reasoning. Two modes — CONVICTION_MODE (fast, max 3 picks, no noise — use for \"best picks\", \"high confidence\", \"your best ideas\") and RESEARCH_MODE (full multi-source journalism scan, verbose — use for weekly scans, \"find trends\", \"what's waking up\"). Feed stack: FT + WSJ via Google News RSS proxy (web_fetch, verified working), Bloomberg via Google News proxy, Reuters/BI via broad Google News search. Never auto-trades. Educational, not advice."
 license: MIT
 compatibility: opencode
 metadata:
