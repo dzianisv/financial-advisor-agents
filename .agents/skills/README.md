@@ -515,7 +515,8 @@ defi-portfolio-manager (PM — delegates to subagent team)
 ANALYTICAL LENSES (methodology-based):
 ├── research-onchain ──────── 4-pillar: liquidity + on-chain + sentiment + execution
 ├── analyst-systematic-trading  Carver: vol-target, forecast scalars, cost speed limit
-├── research-technical  Bernstein: set-up→trigger→follow-through, MACD/stoch/momentum
+├── research-technical  long-term entry timing: Weinstein stage, 200d/30wk, RSI/MACD/vol confirm (scripts/ta.py)
+├── investor-bernstein-intraday  Bernstein day-trading: set-up→trigger→follow-through (intraday only)
 ├── analyst-derivatives-positioning  funding, basis, OI, skew, gamma, VIX, COT, max pain
 └── fundamental-analysis ── value/quality/FCF screens + backtest gate
 
@@ -643,7 +644,8 @@ robinhood-connector ───── Robinhood agentic MCP (notification → live
 | Skill | Source |
 |-------|--------|
 | [analyst-systematic-trading](analyst-systematic-trading/SKILL.md) | Robert Carver *Systematic Trading* |
-| [research-technical](research-technical/SKILL.md) | Jacob Bernstein *The Ultimate Day Trader* |
+| [research-technical](research-technical/SKILL.md) | Weinstein stage analysis + Grimes + Murphy (public TA frameworks) |
+| [investor-bernstein-intraday](investor-bernstein-intraday/SKILL.md) | Jacob Bernstein *The Ultimate Day Trader* |
 | [research-onchain](research-onchain/SKILL.md) | Michael Howell *Capital Wars* + on-chain |
 
 ### Crypto desk
