@@ -62,6 +62,16 @@ flowchart TD
 | Macro | [`analyse-macro`](../analyse-macro/SKILL.md) | GLI, M2, DXY, ETF flows, halving cycle, macro headlines |
 | Smart money | [`analyse-smartmoney`](../analyse-smartmoney/SKILL.md) | Whale flows, exchange inflows/outflows, OTC desk, positioning |
 
+> **`analyse-onchain` vs `analyse-defi` — two layers of "on-chain", different assets.** `analyse-onchain` reads the cost-basis and holder behavior of a monetary asset (BTC/ETH/SOL); `analyse-defi` reads protocol fundamentals of a DeFi token (AAVE/UNI/JUP/AERO…). They are complementary seats, not duplicates.
+>
+> | | `analyse-onchain` | `analyse-defi` |
+> |---|---|---|
+> | **Question** | "Is **BTC** cheap or expensive in its cycle?" | "Does **this protocol's token** capture real value?" |
+> | **Asset** | Bitcoin / L1 monetary assets | DeFi protocol tokens |
+> | **Framework** | Cycle/valuation — MVRV-Z, NUPL, realized price, Puell, LTH/STH, exchange flows | Burniske value-accrual — revenue, TVL, fee distribution |
+> | **Data source** | `crypto-onchain-data` (Glassnode/CryptoQuant style) | DeFiLlama |
+> | **Output** | Zone verdict (DEEP VALUE → EXTREME) + confidence | BULLISH / NEUTRAL / BEARISH vote + reason |
+
 ### Layer 2 — Investment Panel (read briefing, vote per school)
 
 | Seat | Skill | School |
