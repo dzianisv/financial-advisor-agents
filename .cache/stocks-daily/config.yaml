@@ -1,0 +1,9 @@
+# stocks-daily run config. All optional — sensible fallbacks if absent.
+# Holdings source for the underlying stocks-advisor run (one of):
+#   sheet_url + sheet_tab  → Google Sheet holdings (gws-sheets-read)
+#   portfolio_csv          → local CSV: ticker,qty,market_value,unrealized_pl
+# If both absent, stocks-daily only PUBLISHES the latest existing report (won't re-run).
+sheet_url: ""
+sheet_tab: "IBKR"
+portfolio_csv: ".cache/stocks-daily/portfolio.csv"
+hierarchy: "bsc"
